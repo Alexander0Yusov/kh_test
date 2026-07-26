@@ -1,0 +1,32 @@
+dist/
+node_modules/
+
+.env*
+
+docs
+
+Agents.md
+Tasks.md
+Plan.md
+
+# Prisma
+/prisma/*.db
+/prisma/*.db-journal
+apps/**/src/core/prisma/client/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+*.tsbuildinfo
+
+.vscode/
+.idea/
+
+docker-data/
+minio-data/
+postgres-data/
