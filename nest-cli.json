@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "monorepo": true,
+  "defaultProject": "main-gateway-service",
+  "compilerOptions": {
+    "deleteOutDir": true
+  },
+  "projects": {
+    "main-gateway-service": {
+      "type": "application",
+      "root": "apps/main-gateway-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/main-gateway-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/main-gateway-service/tsconfig.app.json"
+      }
+    },
+    "micro-post-service": {
+      "type": "application",
+      "root": "apps/micro-post-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/micro-post-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/micro-post-service/tsconfig.app.json"
+      }
+    },
+    "micro-file-service": {
+      "type": "application",
+      "root": "apps/micro-file-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/micro-file-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/micro-file-service/tsconfig.app.json"
+      }
+    }
+  }
+}

@@ -8,6 +8,7 @@ docs
 Agents.md
 Tasks.md
 Plan.md
+.codexignore
 
 # Prisma
 /prisma/*.db

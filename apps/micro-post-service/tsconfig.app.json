@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/micro-post-service",
+    "rootDir": "../../"
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "test",
+    "**/*.spec.ts",
+    "**/*.e2e-spec.ts",
+    "dist",
+    "node_modules"
+  ]
+}
