@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 import { configValidationUtility } from '../../../../../libs/common/src/config/config-validation.utility';
 
 @Injectable()
@@ -44,6 +51,26 @@ export class FilesConfig {
   })
   filesStorageForcePathStyle: boolean;
 
+  @IsInt({
+    message: 'Env variable FILES_MAX_UPLOAD_SIZE_BYTES must be an integer',
+  })
+  @IsPositive({
+    message: 'Env variable FILES_MAX_UPLOAD_SIZE_BYTES must be positive',
+  })
+  maxUploadSizeBytes: number;
+
+  @IsInt({
+    message: 'Env variable FILES_PRESIGNED_POST_TTL_SECONDS must be an integer',
+  })
+  @IsPositive({
+    message: 'Env variable FILES_PRESIGNED_POST_TTL_SECONDS must be positive',
+  })
+  presignedPostTtlSeconds: number;
+
+  @IsString({ message: 'Env variable FILES_GRPC_URL must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable FILES_GRPC_URL' })
+  grpcUrl: string;
+
   constructor(
     private readonly configService: ConfigService<Record<string, string>, true>,
   ) {
@@ -63,6 +90,13 @@ export class FilesConfig {
     this.filesStorageForcePathStyle = configValidationUtility.convertToBoolean(
       this.configService.get('FILES_STORAGE_FORCE_PATH_STYLE'),
     )!;
+    this.maxUploadSizeBytes = Number(
+      this.configService.get('FILES_MAX_UPLOAD_SIZE_BYTES'),
+    );
+    this.presignedPostTtlSeconds = Number(
+      this.configService.get('FILES_PRESIGNED_POST_TTL_SECONDS'),
+    );
+    this.grpcUrl = this.configService.get('FILES_GRPC_URL');
 
     configValidationUtility.validateConfig(this);
   }

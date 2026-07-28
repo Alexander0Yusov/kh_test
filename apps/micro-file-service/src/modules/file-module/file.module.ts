@@ -1,13 +1,18 @@
 import { Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import { PrismaModule } from '../../common/prisma';
+import { CreateUploadHandler } from './application/commands/create-upload.command';
 import { FileRepository } from './application/contracts/file.repository';
 import { StorageAdapter } from './application/contracts/storage.adapter';
 import { PrismaFileRepository } from './infrastructure/prisma-file.repository';
 import { S3StorageAdapter } from './infrastructure/storage/s3-storage.adapter';
+import { FilesGrpcController } from './presentation/grpc/files-grpc.controller';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [CqrsModule, PrismaModule],
+  controllers: [FilesGrpcController],
   providers: [
+    CreateUploadHandler,
     {
       provide: FileRepository,
       useClass: PrismaFileRepository,
