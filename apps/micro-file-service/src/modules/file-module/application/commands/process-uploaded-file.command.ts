@@ -7,6 +7,7 @@ import {
 import { FilesConfig } from '../../../../common/config/files-config';
 import { FileEntity, FileStatus } from '../../domain';
 import { FileRepository } from '../contracts/file.repository';
+import { FileEventsPublisher } from '../contracts/file-events.publisher';
 import {
   StorageAdapter,
   StorageObjectTooLargeError,
@@ -48,6 +49,7 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
     private readonly fileRepository: FileRepository,
     private readonly storageAdapter: StorageAdapter,
     private readonly filesConfig: FilesConfig,
+    private readonly fileEventsPublisher: FileEventsPublisher,
   ) {}
 
   public async execute(command: ProcessUploadedFileCommand): Promise<void> {
@@ -141,6 +143,10 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
 
     file.markUploaded(dimensions.width, dimensions.height);
     await this.fileRepository.save(file);
+    await this.fileEventsPublisher.publishUploaded({
+      fileId: file.id,
+      status: 'UPLOADED',
+    });
   }
 
   private async inspectContent(

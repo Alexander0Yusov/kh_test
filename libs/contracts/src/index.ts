@@ -9,3 +9,7 @@ export {
   type FilesServiceController,
   type GetFileRequest,
 } from './generated/files';
+export {
+  FILE_UPLOADED_ROUTING_KEY,
+  type FileUploadedEvent,
+} from './events/files/file-uploaded.event';
