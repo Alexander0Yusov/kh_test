@@ -27,15 +27,21 @@ export class S3StorageAdapter
   public constructor(config: FilesConfig) {
     super();
 
-    this.bucket = config.filesStorageBucket;
+    const credentials =
+      config.awsAccessKeyId !== undefined &&
+      config.awsSecretAccessKey !== undefined
+        ? {
+            accessKeyId: config.awsAccessKeyId,
+            secretAccessKey: config.awsSecretAccessKey,
+          }
+        : undefined;
+
+    this.bucket = config.s3Bucket;
     this.client = new S3Client({
-      endpoint: config.filesStorageEndpoint,
-      region: config.filesStorageRegion,
-      credentials: {
-        accessKeyId: config.filesStorageAccessKey,
-        secretAccessKey: config.filesStorageSecretKey,
-      },
-      forcePathStyle: config.filesStorageForcePathStyle,
+      endpoint: config.s3Endpoint,
+      region: config.awsRegion,
+      credentials,
+      forcePathStyle: config.s3ForcePathStyle,
     });
   }
 

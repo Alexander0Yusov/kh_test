@@ -5,8 +5,11 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsPositive,
   IsString,
+  IsUrl,
+  ValidateIf,
 } from 'class-validator';
 import { configValidationUtility } from '../../../../../libs/common/src/config/config-validation.utility';
 
@@ -22,34 +25,56 @@ export class FilesConfig {
   })
   prismaDbUrl: string;
 
-  @IsString({ message: 'Env variable FILES_STORAGE_ENDPOINT must be a string' })
-  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_ENDPOINT' })
-  filesStorageEndpoint: string;
+  @IsString({ message: 'Env variable AWS_REGION must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable AWS_REGION' })
+  awsRegion: string;
 
-  @IsString({ message: 'Env variable FILES_STORAGE_REGION must be a string' })
-  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_REGION' })
-  filesStorageRegion: string;
+  @ValidateIf(
+    (config: FilesConfig) =>
+      config.awsAccessKeyId !== undefined ||
+      config.awsSecretAccessKey !== undefined,
+  )
+  @IsString({ message: 'Env variable AWS_ACCESS_KEY_ID must be a string' })
+  @IsNotEmpty({ message: 'Set both AWS credential variables or neither' })
+  awsAccessKeyId: string | undefined;
 
-  @IsString({
-    message: 'Env variable FILES_STORAGE_ACCESS_KEY must be a string',
-  })
-  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_ACCESS_KEY' })
-  filesStorageAccessKey: string;
+  @ValidateIf(
+    (config: FilesConfig) =>
+      config.awsAccessKeyId !== undefined ||
+      config.awsSecretAccessKey !== undefined,
+  )
+  @IsString({ message: 'Env variable AWS_SECRET_ACCESS_KEY must be a string' })
+  @IsNotEmpty({ message: 'Set both AWS credential variables or neither' })
+  awsSecretAccessKey: string | undefined;
 
-  @IsString({
-    message: 'Env variable FILES_STORAGE_SECRET_KEY must be a string',
-  })
-  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_SECRET_KEY' })
-  filesStorageSecretKey: string;
+  @IsOptional()
+  @IsUrl(
+    { require_protocol: true },
+    { message: 'Env variable S3_ENDPOINT must be a valid URL' },
+  )
+  s3Endpoint: string | undefined;
 
-  @IsString({ message: 'Env variable FILES_STORAGE_BUCKET must be a string' })
-  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_BUCKET' })
-  filesStorageBucket: string;
+  @IsString({ message: 'Env variable S3_BUCKET must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable S3_BUCKET' })
+  s3Bucket: string;
 
   @IsBoolean({
-    message: 'Env variable FILES_STORAGE_FORCE_PATH_STYLE must be a boolean',
+    message: 'Env variable S3_FORCE_PATH_STYLE must be a boolean',
   })
-  filesStorageForcePathStyle: boolean;
+  s3ForcePathStyle: boolean;
+
+  @IsOptional()
+  @IsUrl(
+    { require_protocol: true },
+    { message: 'Env variable SQS_ENDPOINT must be a valid URL' },
+  )
+  sqsEndpoint: string | undefined;
+
+  @IsUrl(
+    { require_protocol: true },
+    { message: 'Env variable SQS_QUEUE_URL must be a valid URL' },
+  )
+  sqsQueueUrl: string;
 
   @IsInt({
     message: 'Env variable FILES_MAX_UPLOAD_SIZE_BYTES must be an integer',
@@ -76,20 +101,16 @@ export class FilesConfig {
   ) {
     this.port = Number(this.configService.get('PORT'));
     this.prismaDbUrl = this.configService.get('PRISMA_DB_URL');
-    this.filesStorageEndpoint = this.configService.get(
-      'FILES_STORAGE_ENDPOINT',
-    );
-    this.filesStorageRegion = this.configService.get('FILES_STORAGE_REGION');
-    this.filesStorageAccessKey = this.configService.get(
-      'FILES_STORAGE_ACCESS_KEY',
-    );
-    this.filesStorageSecretKey = this.configService.get(
-      'FILES_STORAGE_SECRET_KEY',
-    );
-    this.filesStorageBucket = this.configService.get('FILES_STORAGE_BUCKET');
-    this.filesStorageForcePathStyle = configValidationUtility.convertToBoolean(
-      this.configService.get('FILES_STORAGE_FORCE_PATH_STYLE'),
+    this.awsRegion = this.configService.get('AWS_REGION');
+    this.awsAccessKeyId = this.configService.get('AWS_ACCESS_KEY_ID');
+    this.awsSecretAccessKey = this.configService.get('AWS_SECRET_ACCESS_KEY');
+    this.s3Endpoint = this.configService.get('S3_ENDPOINT');
+    this.s3Bucket = this.configService.get('S3_BUCKET');
+    this.s3ForcePathStyle = configValidationUtility.convertToBoolean(
+      this.configService.get('S3_FORCE_PATH_STYLE'),
     )!;
+    this.sqsEndpoint = this.configService.get('SQS_ENDPOINT');
+    this.sqsQueueUrl = this.configService.get('SQS_QUEUE_URL');
     this.maxUploadSizeBytes = Number(
       this.configService.get('FILES_MAX_UPLOAD_SIZE_BYTES'),
     );

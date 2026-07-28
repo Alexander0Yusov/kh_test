@@ -61,7 +61,7 @@ export class CreateUploadHandler implements ICommandHandler<
     const file = new FileEntity({
       id: fileId,
       s3Key,
-      bucket: this.filesConfig.filesStorageBucket,
+      bucket: this.filesConfig.s3Bucket,
       extension,
       size: command.fileSize,
       width: null,
