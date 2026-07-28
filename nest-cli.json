@@ -13,7 +13,16 @@
       "entryFile": "main",
       "sourceRoot": "apps/main-gateway-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/main-gateway-service/tsconfig.app.json"
+        "tsConfigPath": "apps/main-gateway-service/tsconfig.app.json",
+        "plugins": [
+          {
+            "name": "@nestjs/swagger",
+            "options": {
+              "classValidatorShim": true,
+              "dtoFileNameSuffix": [".dto.ts"]
+            }
+          }
+        ]
       }
     },
     "micro-post-service": {

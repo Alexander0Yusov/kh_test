@@ -12,7 +12,7 @@ import {
 } from '../../../libs/bootstrap/src/index';
 import { loadServiceEnvironment } from '../../../libs/common/src/config';
 import { GatewayConfig } from './common/config/gateway-config';
-import { configureSwagger } from './common/swagger/configure-swagger';
+import { setupSwagger } from './common/swagger/setup-swagger';
 
 async function bootstrap(): Promise<void> {
   loadServiceEnvironment(join(process.cwd(), 'apps', 'main-gateway-service'));
@@ -30,9 +30,9 @@ async function bootstrap(): Promise<void> {
   setupHttpFilters(app);
   setupInterceptors(app);
 
-  setupHelmet(app);
+  setupHelmet(app, gatewayConfig.swaggerEnabled);
   setupCors(app);
-  configureSwagger(app);
+  setupSwagger(app);
 
   await app.listen(gatewayConfig.port);
 }

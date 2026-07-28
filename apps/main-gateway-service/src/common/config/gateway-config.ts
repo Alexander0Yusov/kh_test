@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -49,6 +50,13 @@ export class GatewayConfig {
   })
   jwtRefreshTtlSeconds: number;
 
+  @IsString({ message: 'Env variable FILE_SERVICE_GRPC_URL must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable FILE_SERVICE_GRPC_URL' })
+  fileServiceGrpcUrl: string;
+
+  @IsBoolean({ message: 'Env variable SWAGGER_ENABLED must be a boolean' })
+  swaggerEnabled: boolean;
+
   constructor(
     private readonly configService: ConfigService<Record<string, string>, true>,
   ) {
@@ -63,6 +71,10 @@ export class GatewayConfig {
     this.jwtRefreshTtlSeconds = Number(
       this.configService.get('JWT_REFRESH_TTL_SECONDS'),
     );
+    this.fileServiceGrpcUrl = this.configService.get('FILE_SERVICE_GRPC_URL');
+    this.swaggerEnabled = configValidationUtility.convertToBoolean(
+      this.configService.get('SWAGGER_ENABLED'),
+    )!;
 
     configValidationUtility.validateConfig(this);
   }
