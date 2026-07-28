@@ -9,17 +9,17 @@ export class PostsConfig {
   @IsNotEmpty({ message: 'Set Env variable PORT, example: 3001' })
   port: number;
 
-  @IsString({ message: 'Env variable DATABASE_URL must be a string' })
+  @IsString({ message: 'Env variable PRISMA_DB_URL must be a string' })
   @IsNotEmpty({
-    message: 'Set Env variable DATABASE_URL, example: postgresql://...',
+    message: 'Set Env variable PRISMA_DB_URL, example: postgresql://...',
   })
-  databaseUrl: string;
+  prismaDbUrl: string;
 
   constructor(
     private readonly configService: ConfigService<Record<string, string>, true>,
   ) {
     this.port = Number(this.configService.get('PORT'));
-    this.databaseUrl = this.configService.get('DATABASE_URL');
+    this.prismaDbUrl = this.configService.get('PRISMA_DB_URL');
 
     configValidationUtility.validateConfig(this);
   }

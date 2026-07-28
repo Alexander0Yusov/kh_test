@@ -1,0 +1,39 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "./generated"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String    @id @db.Uuid
+  email        String    @unique
+  userName     String
+  passwordHash String
+  homePage     String
+  avatarFileId String?   @db.Uuid
+  createdAt    DateTime
+  updatedAt    DateTime
+  deletedAt    DateTime?
+  sessions     Session[]
+}
+
+model Session {
+  id         String    @id @db.Uuid
+  userId     String    @db.Uuid
+  deviceId   String
+  deviceName String
+  ip         String
+  issuedAt   DateTime
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime
+  updatedAt  DateTime
+  deletedAt  DateTime?
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}

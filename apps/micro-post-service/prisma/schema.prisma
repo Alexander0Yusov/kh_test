@@ -1,0 +1,27 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "./generated"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Post {
+  id               String    @id @db.Uuid
+  userId           String    @db.Uuid
+  parentId         String?   @db.Uuid
+  rootId           String?   @db.Uuid
+  childCounter     Int       @default(0)
+  path             String
+  message          String
+  attachmentFileId String?   @db.Uuid
+  createdAt        DateTime
+  updatedAt        DateTime
+  deletedAt        DateTime?
+
+  @@index([userId])
+  @@index([parentId])
+  @@index([rootId])
+}

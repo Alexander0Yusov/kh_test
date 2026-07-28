@@ -15,11 +15,18 @@ export class GatewayConfig {
   })
   frontEndUrl: string;
 
+  @IsString({ message: 'Env variable PRISMA_DB_URL must be a string' })
+  @IsNotEmpty({
+    message: 'Set Env variable PRISMA_DB_URL, example: postgresql://...',
+  })
+  prismaDbUrl: string;
+
   constructor(
     private readonly configService: ConfigService<Record<string, string>, true>,
   ) {
     this.port = Number(this.configService.get('PORT'));
     this.frontEndUrl = this.configService.get('FRONTEND_URL');
+    this.prismaDbUrl = this.configService.get('PRISMA_DB_URL');
 
     configValidationUtility.validateConfig(this);
   }

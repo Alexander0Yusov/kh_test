@@ -13,7 +13,9 @@ Plan.md
 # Prisma
 /prisma/*.db
 /prisma/*.db-journal
-apps/**/src/core/prisma/client/
+apps/main-gateway-service/prisma/generated/
+apps/micro-post-service/prisma/generated/
+apps/micro-file-service/prisma/generated/
 
 # Logs
 logs

@@ -1,0 +1,31 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "./generated"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum FileStatus {
+  PENDING
+  UPLOADED
+  USED
+  REJECTED
+  FAILED
+}
+
+model File {
+  id        String     @id @db.Uuid
+  s3Key     String
+  bucket    String
+  extension String
+  size      Int
+  width     Int?
+  height    Int?
+  status    FileStatus @default(PENDING)
+  createdAt DateTime
+  updatedAt DateTime
+  deletedAt DateTime?
+}
