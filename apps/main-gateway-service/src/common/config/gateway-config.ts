@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 import { configValidationUtility } from '../../../../../libs/common/src/config/config-validation.utility';
 
 @Injectable()
@@ -21,12 +27,42 @@ export class GatewayConfig {
   })
   prismaDbUrl: string;
 
+  @IsString({ message: 'Env variable JWT_ACCESS_SECRET must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable JWT_ACCESS_SECRET' })
+  jwtAccessSecret: string;
+
+  @IsString({ message: 'Env variable JWT_REFRESH_SECRET must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable JWT_REFRESH_SECRET' })
+  jwtRefreshSecret: string;
+
+  @IsInt({ message: 'Env variable JWT_ACCESS_TTL_SECONDS must be an integer' })
+  @IsPositive({
+    message: 'Env variable JWT_ACCESS_TTL_SECONDS must be positive',
+  })
+  jwtAccessTtlSeconds: number;
+
+  @IsInt({
+    message: 'Env variable JWT_REFRESH_TTL_SECONDS must be an integer',
+  })
+  @IsPositive({
+    message: 'Env variable JWT_REFRESH_TTL_SECONDS must be positive',
+  })
+  jwtRefreshTtlSeconds: number;
+
   constructor(
     private readonly configService: ConfigService<Record<string, string>, true>,
   ) {
     this.port = Number(this.configService.get('PORT'));
     this.frontEndUrl = this.configService.get('FRONTEND_URL');
     this.prismaDbUrl = this.configService.get('PRISMA_DB_URL');
+    this.jwtAccessSecret = this.configService.get('JWT_ACCESS_SECRET');
+    this.jwtRefreshSecret = this.configService.get('JWT_REFRESH_SECRET');
+    this.jwtAccessTtlSeconds = Number(
+      this.configService.get('JWT_ACCESS_TTL_SECONDS'),
+    );
+    this.jwtRefreshTtlSeconds = Number(
+      this.configService.get('JWT_REFRESH_TTL_SECONDS'),
+    );
 
     configValidationUtility.validateConfig(this);
   }

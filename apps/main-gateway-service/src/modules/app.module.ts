@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { GatewayConfigModule } from '../common/config/gateway-config.module';
-import { PrismaModule } from '../common/prisma';
+import { UserModule } from './user-module';
 
 @Module({
-  imports: [GatewayConfigModule, PrismaModule],
+  imports: [GatewayConfigModule, UserModule],
   controllers: [],
   providers: [],
 })

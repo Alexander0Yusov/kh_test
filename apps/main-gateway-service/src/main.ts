@@ -18,6 +18,7 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create(AppModule);
   app.enableShutdownHooks();
+  app.setGlobalPrefix('api');
 
   const gatewayConfig = app.get(GatewayConfig);
 

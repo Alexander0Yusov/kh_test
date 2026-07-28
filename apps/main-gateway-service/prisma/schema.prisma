@@ -14,7 +14,7 @@ model User {
   userName     String
   passwordHash String
   homePage     String
-  avatarFileId String?   @db.Uuid
+  avatarFileId String    @db.Uuid
   createdAt    DateTime
   updatedAt    DateTime
   deletedAt    DateTime?

@@ -6,7 +6,7 @@ export type UserEntityProps = {
   userName: string;
   passwordHash: string;
   homePage: string;
-  avatarFileId: string | null;
+  avatarFileId: string;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
@@ -21,7 +21,7 @@ export class UserEntity extends BaseDomainEntity {
 
   private _homePage: string;
 
-  private _avatarFileId: string | null;
+  private _avatarFileId: string;
 
   public constructor(props: UserEntityProps) {
     super(props);
@@ -49,7 +49,7 @@ export class UserEntity extends BaseDomainEntity {
     return this._homePage;
   }
 
-  public get avatarFileId(): string | null {
+  public get avatarFileId(): string {
     return this._avatarFileId;
   }
 
@@ -86,15 +86,6 @@ export class UserEntity extends BaseDomainEntity {
     }
 
     this._avatarFileId = avatarFileId;
-    this.touch();
-  }
-
-  public removeAvatar(): void {
-    if (this._avatarFileId === null) {
-      return;
-    }
-
-    this._avatarFileId = null;
     this.touch();
   }
 }
