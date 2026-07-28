@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { configValidationUtility } from '../../../../../libs/common/src/config/config-validation.utility';
 
 @Injectable()
@@ -15,11 +15,54 @@ export class FilesConfig {
   })
   prismaDbUrl: string;
 
+  @IsString({ message: 'Env variable FILES_STORAGE_ENDPOINT must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_ENDPOINT' })
+  filesStorageEndpoint: string;
+
+  @IsString({ message: 'Env variable FILES_STORAGE_REGION must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_REGION' })
+  filesStorageRegion: string;
+
+  @IsString({
+    message: 'Env variable FILES_STORAGE_ACCESS_KEY must be a string',
+  })
+  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_ACCESS_KEY' })
+  filesStorageAccessKey: string;
+
+  @IsString({
+    message: 'Env variable FILES_STORAGE_SECRET_KEY must be a string',
+  })
+  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_SECRET_KEY' })
+  filesStorageSecretKey: string;
+
+  @IsString({ message: 'Env variable FILES_STORAGE_BUCKET must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable FILES_STORAGE_BUCKET' })
+  filesStorageBucket: string;
+
+  @IsBoolean({
+    message: 'Env variable FILES_STORAGE_FORCE_PATH_STYLE must be a boolean',
+  })
+  filesStorageForcePathStyle: boolean;
+
   constructor(
     private readonly configService: ConfigService<Record<string, string>, true>,
   ) {
     this.port = Number(this.configService.get('PORT'));
     this.prismaDbUrl = this.configService.get('PRISMA_DB_URL');
+    this.filesStorageEndpoint = this.configService.get(
+      'FILES_STORAGE_ENDPOINT',
+    );
+    this.filesStorageRegion = this.configService.get('FILES_STORAGE_REGION');
+    this.filesStorageAccessKey = this.configService.get(
+      'FILES_STORAGE_ACCESS_KEY',
+    );
+    this.filesStorageSecretKey = this.configService.get(
+      'FILES_STORAGE_SECRET_KEY',
+    );
+    this.filesStorageBucket = this.configService.get('FILES_STORAGE_BUCKET');
+    this.filesStorageForcePathStyle = configValidationUtility.convertToBoolean(
+      this.configService.get('FILES_STORAGE_FORCE_PATH_STYLE'),
+    )!;
 
     configValidationUtility.validateConfig(this);
   }
