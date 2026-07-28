@@ -17,6 +17,8 @@ async function bootstrap(): Promise<void> {
   loadServiceEnvironment(join(process.cwd(), 'apps', 'main-gateway-service'));
 
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
+
   const gatewayConfig = app.get(GatewayConfig);
 
   setupValidation(app);

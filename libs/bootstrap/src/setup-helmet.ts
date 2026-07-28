@@ -1,7 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
+import helmet from 'helmet';
 
 export function setupHelmet(app: INestApplication): void {
-  // Requires 'helmet' package to be installed
-  // app.use(helmet());
-  void app;
+  app.use(helmet());
 }
