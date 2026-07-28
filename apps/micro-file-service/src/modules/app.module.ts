@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { FilesConfigModule } from '../common/config/files-config.module';
-import { PrismaModule } from '../common/prisma';
+import { FileModule } from './file-module/file.module';
 
 @Module({
-  imports: [FilesConfigModule, PrismaModule],
+  imports: [FilesConfigModule, FileModule],
   controllers: [],
   providers: [],
 })

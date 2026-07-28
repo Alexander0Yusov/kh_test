@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package files.v1;
+
+service FilesService {
+  rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
+  rpc GetFile(GetFileRequest) returns (FileDto);
+}
+
+message CreateUploadRequest {
+  string file_extension = 1;
+  int64 file_size = 2;
+}
+
+message CreateUploadResponse {
+  string upload_url = 1;
+  map<string, string> upload_fields = 2;
+  string file_id = 3;
+}
+
+message GetFileRequest {
+  string file_id = 1;
+}
+
+message FileDto {
+  string id = 1;
+  FileStatus status = 2;
+  optional string public_url = 3;
+}
+
+enum FileStatus {
+  FILE_STATUS_UNSPECIFIED = 0;
+  FILE_STATUS_PENDING = 1;
+  FILE_STATUS_UPLOADED = 2;
+  FILE_STATUS_USED = 3;
+  FILE_STATUS_REJECTED = 4;
+  FILE_STATUS_FAILED = 5;
+}
