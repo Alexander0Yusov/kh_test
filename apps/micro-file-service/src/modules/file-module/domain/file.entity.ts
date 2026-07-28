@@ -28,9 +28,9 @@ export class FileEntity extends BaseDomainEntity {
 
   private readonly _size: number;
 
-  private readonly _width: number | null;
+  private _width: number | null;
 
-  private readonly _height: number | null;
+  private _height: number | null;
 
   private _status: FileStatus;
 
@@ -74,8 +74,10 @@ export class FileEntity extends BaseDomainEntity {
     return this._status;
   }
 
-  public markUploaded(): void {
+  public markUploaded(width: number | null, height: number | null): void {
     this.transitionTo(FileStatus.Uploaded, [FileStatus.Pending]);
+    this._width = width;
+    this._height = height;
   }
 
   public markUsed(): void {

@@ -83,4 +83,18 @@ export class PrismaFileRepository extends FileRepository {
       deletedAt: file.deletedAt,
     });
   }
+
+  public async save(file: FileEntity): Promise<void> {
+    await this.prisma.file.update({
+      where: {
+        id: file.id,
+      },
+      data: {
+        width: file.width,
+        height: file.height,
+        status: toPrismaStatus(file.status),
+        updatedAt: file.updatedAt,
+      },
+    });
+  }
 }
