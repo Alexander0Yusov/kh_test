@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { GatewayConfig } from '../../../common/config/gateway-config';
 import {
+  TokenPair,
   TokenPayload,
   TokenService,
 } from '../application/contracts/token.service';
@@ -15,33 +16,39 @@ export class JwtTokenService extends TokenService {
     super();
   }
 
-  public createAccessToken(userId: string, sessionId: string): Promise<string> {
-    const payload: TokenPayload = {
-      sub: userId,
-      sid: sessionId,
-      type: 'access',
-    };
-
-    return this.jwtService.signAsync(payload, {
-      secret: this.config.jwtAccessSecret,
-      expiresIn: this.config.jwtAccessTtlSeconds,
-    });
-  }
-
-  public createRefreshToken(
+  public async createTokenPair(
     userId: string,
     sessionId: string,
-  ): Promise<string> {
-    const payload: TokenPayload = {
-      sub: userId,
-      sid: sessionId,
-      type: 'refresh',
-    };
+  ): Promise<TokenPair> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        {
+          sub: userId,
+          sid: sessionId,
+          type: 'access',
+        } satisfies TokenPayload,
+        {
+          secret: this.config.jwtAccessSecret,
+          expiresIn: this.config.jwtAccessTtlSeconds,
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          sub: userId,
+          sid: sessionId,
+          type: 'refresh',
+        } satisfies TokenPayload,
+        {
+          secret: this.config.jwtRefreshSecret,
+          expiresIn: this.config.jwtRefreshTtlSeconds,
+        },
+      ),
+    ]);
 
-    return this.jwtService.signAsync(payload, {
-      secret: this.config.jwtRefreshSecret,
-      expiresIn: this.config.jwtRefreshTtlSeconds,
-    });
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 
   public async verifyRefreshToken(token: string): Promise<TokenPayload | null> {

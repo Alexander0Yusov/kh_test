@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../../common/prisma';
 import { LoginUserHandler } from './application/commands/login-user.command';
 import { LogoutUserHandler } from './application/commands/logout-user.command';
+import { RefreshTokenHandler } from './application/commands/refresh-token.command';
 import { RegisterUserHandler } from './application/commands/register-user.command';
 import { PasswordHasher } from './application/contracts/password-hasher';
 import { SessionRepository } from './application/contracts/session.repository';
@@ -23,6 +24,7 @@ import { UserController } from './presentation/user.controller';
     RegisterUserHandler,
     LoginUserHandler,
     LogoutUserHandler,
+    RefreshTokenHandler,
     {
       provide: UserRepository,
       useClass: PrismaUserRepository,

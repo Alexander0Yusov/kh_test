@@ -4,16 +4,16 @@ export type TokenPayload = {
   type: 'access' | 'refresh';
 };
 
-export abstract class TokenService {
-  public abstract createAccessToken(
-    userId: string,
-    sessionId: string,
-  ): Promise<string>;
+export type TokenPair = {
+  accessToken: string;
+  refreshToken: string;
+};
 
-  public abstract createRefreshToken(
+export abstract class TokenService {
+  public abstract createTokenPair(
     userId: string,
     sessionId: string,
-  ): Promise<string>;
+  ): Promise<TokenPair>;
 
   public abstract verifyRefreshToken(
     token: string,

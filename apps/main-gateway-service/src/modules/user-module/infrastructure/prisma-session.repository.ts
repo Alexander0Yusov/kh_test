@@ -60,4 +60,44 @@ export class PrismaSessionRepository extends SessionRepository {
       deletedAt: session.deletedAt,
     });
   }
+
+  public rotate(
+    previousSession: SessionEntity,
+    nextSession: SessionEntity,
+  ): Promise<boolean> {
+    return this.prisma.$transaction(async (prisma): Promise<boolean> => {
+      const updateResult = await prisma.session.updateMany({
+        where: {
+          id: previousSession.id,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: previousSession.revokedAt,
+          updatedAt: previousSession.updatedAt,
+        },
+      });
+
+      if (updateResult.count !== 1) {
+        return false;
+      }
+
+      await prisma.session.create({
+        data: {
+          id: nextSession.id,
+          userId: nextSession.userId,
+          deviceId: nextSession.deviceId,
+          deviceName: nextSession.deviceName,
+          ip: nextSession.ip,
+          issuedAt: nextSession.issuedAt,
+          expiresAt: nextSession.expiresAt,
+          revokedAt: nextSession.revokedAt,
+          createdAt: nextSession.createdAt,
+          updatedAt: nextSession.updatedAt,
+          deletedAt: nextSession.deletedAt,
+        },
+      });
+
+      return true;
+    });
+  }
 }

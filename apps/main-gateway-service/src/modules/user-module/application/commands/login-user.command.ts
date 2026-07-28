@@ -8,20 +8,10 @@ import { GatewayConfig } from '../../../../common/config/gateway-config';
 import { SessionEntity } from '../../domain';
 import { PasswordHasher } from '../contracts/password-hasher';
 import { SessionRepository } from '../contracts/session.repository';
-import { TokenService } from '../contracts/token.service';
+import { TokenPair, TokenService } from '../contracts/token.service';
 import { UserRepository } from '../contracts/user.repository';
 
-export type LoginUserResult = {
-  accessToken: string;
-  refreshToken: string;
-  user: {
-    id: string;
-    email: string;
-    userName: string;
-    homePage: string;
-    avatarFileId: string;
-  };
-};
+export type LoginUserResult = TokenPair;
 
 export class LoginUserCommand extends Command<LoginUserResult> {
   public constructor(
@@ -81,26 +71,7 @@ export class LoginUserHandler implements ICommandHandler<
 
     await this.sessionRepository.save(session);
 
-    const accessToken = await this.tokenService.createAccessToken(
-      user.id,
-      session.id,
-    );
-    const refreshToken = await this.tokenService.createRefreshToken(
-      user.id,
-      session.id,
-    );
-
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        userName: user.userName,
-        homePage: user.homePage,
-        avatarFileId: user.avatarFileId,
-      },
-    };
+    return this.tokenService.createTokenPair(user.id, session.id);
   }
 
   private invalidCredentials(): DomainException {

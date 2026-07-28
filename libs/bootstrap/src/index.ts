@@ -1,4 +1,5 @@
 export { setupCors } from './setup-cors';
+export { setupCookieParser } from './setup-cookie-parser';
 export { setupGrpcFilters } from './setup-grpc-filters';
 export { setupHelmet } from './setup-helmet';
 export { setupHttpFilters } from './setup-http-filters';

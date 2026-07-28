@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { AppModule } from './modules/app.module';
 import {
   setupCors,
+  setupCookieParser,
   setupHelmet,
   setupHttpFilters,
   setupInterceptors,
@@ -23,6 +24,7 @@ async function bootstrap(): Promise<void> {
   const gatewayConfig = app.get(GatewayConfig);
 
   setupValidation(app);
+  setupCookieParser(app);
   setupLogger(app);
 
   setupHttpFilters(app);
