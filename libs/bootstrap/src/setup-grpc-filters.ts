@@ -1,5 +1,6 @@
-import type { INestApplication } from '@nestjs/common';
+import type { INestMicroservice } from '@nestjs/common';
+import { GrpcExceptionFilter } from './filters/grpc-exception.filter';
 
-export function setupGrpcFilters(app: INestApplication): void {
-  void app;
+export function setupGrpcFilters(app: INestMicroservice): void {
+  app.useGlobalFilters(new GrpcExceptionFilter());
 }

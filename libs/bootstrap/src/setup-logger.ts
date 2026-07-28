@@ -1,5 +1,6 @@
+import { Logger } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 
 export function setupLogger(app: INestApplication): void {
-  void app;
+  app.useLogger(new Logger());
 }

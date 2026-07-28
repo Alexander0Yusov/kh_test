@@ -1,0 +1,16 @@
+export enum DomainExceptionCode {
+  BadRequest = 'BAD_REQUEST',
+  ValidationFailed = 'VALIDATION_FAILED',
+  Unauthorized = 'UNAUTHORIZED',
+  Forbidden = 'FORBIDDEN',
+  NotFound = 'NOT_FOUND',
+  AlreadyExists = 'ALREADY_EXISTS',
+  EmailAlreadyExists = 'EMAIL_ALREADY_EXISTS',
+  Conflict = 'CONFLICT',
+  InvalidBusinessState = 'INVALID_BUSINESS_STATE',
+  PayloadTooLarge = 'PAYLOAD_TOO_LARGE',
+  UnsupportedMediaType = 'UNSUPPORTED_MEDIA_TYPE',
+  TooManyRequests = 'TOO_MANY_REQUESTS',
+  ServiceUnavailable = 'SERVICE_UNAVAILABLE',
+  GatewayTimeout = 'GATEWAY_TIMEOUT',
+}

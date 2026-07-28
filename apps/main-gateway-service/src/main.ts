@@ -5,6 +5,7 @@ import {
   setupCors,
   setupHelmet,
   setupHttpFilters,
+  setupInterceptors,
   setupLogger,
   setupValidation,
 } from '../../../libs/bootstrap/src/index';
@@ -20,9 +21,12 @@ async function bootstrap(): Promise<void> {
 
   setupValidation(app);
   setupLogger(app);
-  setupCors(app);
-  setupHelmet(app);
+
   setupHttpFilters(app);
+  setupInterceptors(app);
+
+  setupHelmet(app);
+  setupCors(app);
   configureSwagger(app);
 
   await app.listen(gatewayConfig.port);
