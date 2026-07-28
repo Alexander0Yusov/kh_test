@@ -1,4 +1,4 @@
-import { BaseDomainEntity } from '../../../../../libs/common/src';
+import { BaseDomainEntity } from '../../../../../../libs/common/src/domain/entities/base-domain.entity';
 
 export type UserEntityProps = {
   id: string;

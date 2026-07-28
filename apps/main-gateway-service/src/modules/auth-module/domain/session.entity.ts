@@ -2,7 +2,7 @@ import {
   BaseDomainEntity,
   DomainException,
   DomainExceptionCode,
-} from '../../../../../libs/common/src';
+} from '../../../../../../libs/common/src';
 
 export type SessionEntityProps = {
   id: string;
