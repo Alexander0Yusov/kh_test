@@ -1,11 +1,19 @@
 import { Injectable, type OnModuleDestroy } from '@nestjs/common';
-import { S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  S3Client,
+  S3ServiceException,
+} from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { FilesConfig } from '../../../../common/config/files-config';
 import {
   type CreatePresignedPostParams,
   type PresignedPostResult,
   StorageAdapter,
+  type StorageObjectMetadata,
+  StorageObjectTooLargeError,
 } from '../../application/contracts/storage.adapter';
 
 @Injectable()
@@ -57,6 +65,87 @@ export class S3StorageAdapter
     };
   }
 
+  public async headObject(key: string): Promise<StorageObjectMetadata | null> {
+    this.validateKey(key);
+
+    try {
+      const result = await this.client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+      const size = result.ContentLength;
+
+      if (
+        typeof size !== 'number' ||
+        !Number.isFinite(size) ||
+        !Number.isInteger(size) ||
+        size < 0
+      ) {
+        throw new Error('Storage returned an invalid object size.');
+      }
+
+      return {
+        size,
+        contentType: result.ContentType ?? null,
+      };
+    } catch (error: unknown) {
+      if (this.isNotFound(error)) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  public async getObject(
+    key: string,
+    maxSizeBytes: number,
+  ): Promise<Uint8Array | null> {
+    this.validateKey(key);
+    this.validateMaxSize(maxSizeBytes);
+
+    try {
+      const result = await this.client.send(
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Range: `bytes=0-${maxSizeBytes}`,
+        }),
+      );
+
+      if (result.Body === undefined) {
+        throw new Error('Storage returned an empty object body.');
+      }
+
+      const bytes = await result.Body.transformToByteArray();
+
+      if (bytes.byteLength > maxSizeBytes) {
+        throw new StorageObjectTooLargeError();
+      }
+
+      return bytes;
+    } catch (error: unknown) {
+      if (this.isNotFound(error)) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  public async deleteObject(key: string): Promise<void> {
+    this.validateKey(key);
+
+    await this.client.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
+  }
+
   public onModuleDestroy(): void {
     this.client.destroy();
   }
@@ -80,5 +169,30 @@ export class S3StorageAdapter
     ) {
       throw new RangeError('Presigned POST TTL must be a positive integer.');
     }
+  }
+
+  private validateKey(key: string): void {
+    if (key.trim().length === 0) {
+      throw new TypeError('Storage object key must not be empty.');
+    }
+  }
+
+  private validateMaxSize(maxSizeBytes: number): void {
+    if (
+      !Number.isFinite(maxSizeBytes) ||
+      !Number.isInteger(maxSizeBytes) ||
+      maxSizeBytes <= 0
+    ) {
+      throw new RangeError('Storage maximum size must be a positive integer.');
+    }
+  }
+
+  private isNotFound(error: unknown): boolean {
+    return (
+      error instanceof S3ServiceException &&
+      (error.name === 'NoSuchKey' ||
+        error.name === 'NotFound' ||
+        error.$metadata.httpStatusCode === 404)
+    );
   }
 }
