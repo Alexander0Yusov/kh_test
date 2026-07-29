@@ -20,8 +20,19 @@ model Post {
   createdAt        DateTime
   updatedAt        DateTime
   deletedAt        DateTime?
+  user             PostUser  @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([parentId])
   @@index([rootId])
+}
+
+model PostUser {
+  id       String @id @db.Uuid
+  email    String
+  userName String
+  posts    Post[]
+
+  @@index([email, id])
+  @@index([userName, id])
 }

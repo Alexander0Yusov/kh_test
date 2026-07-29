@@ -54,6 +54,10 @@ export class GatewayConfig {
   @IsNotEmpty({ message: 'Set Env variable FILE_SERVICE_GRPC_URL' })
   fileServiceGrpcUrl: string;
 
+  @IsString({ message: 'Env variable POST_SERVICE_GRPC_URL must be a string' })
+  @IsNotEmpty({ message: 'Set Env variable POST_SERVICE_GRPC_URL' })
+  postServiceGrpcUrl: string;
+
   @IsBoolean({ message: 'Env variable SWAGGER_ENABLED must be a boolean' })
   swaggerEnabled: boolean;
 
@@ -72,6 +76,7 @@ export class GatewayConfig {
       this.configService.get('JWT_REFRESH_TTL_SECONDS'),
     );
     this.fileServiceGrpcUrl = this.configService.get('FILE_SERVICE_GRPC_URL');
+    this.postServiceGrpcUrl = this.configService.get('POST_SERVICE_GRPC_URL');
     this.swaggerEnabled = configValidationUtility.convertToBoolean(
       this.configService.get('SWAGGER_ENABLED'),
     )!;

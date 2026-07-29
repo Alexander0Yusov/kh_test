@@ -64,6 +64,8 @@ export class RegisterUserHandler implements ICommandHandler<
     await this.userRepository.save(user);
     await this.userEventsPublisher.publishCreated({
       userId: user.id,
+      email: user.email,
+      userName: user.userName,
       avatarFileId: user.avatarFileId,
     });
 

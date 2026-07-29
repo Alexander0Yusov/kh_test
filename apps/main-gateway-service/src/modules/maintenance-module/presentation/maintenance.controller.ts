@@ -20,7 +20,7 @@ export class MaintenanceController {
     operationId: 'eraseAllData',
     summary: 'Erase all demonstration data',
     description:
-      'Irreversibly deletes all demonstration User, Session, File and S3 object data.',
+      'Irreversibly deletes all demonstration S3 object, File, Post, PostUser, Session and User data.',
   })
   @ApiNoContentResponse({ description: 'All demonstration data was erased.' })
   @ApiServiceUnavailableResponse({ type: ErrorResponseDto })

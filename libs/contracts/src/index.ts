@@ -14,6 +14,12 @@ export {
 } from './generated/files';
 export type { Empty } from './generated/google/protobuf/empty';
 export {
+  POSTS_SERVICE_NAME,
+  POSTS_V1_PACKAGE_NAME,
+  type PostsServiceClient,
+  type PostsServiceController,
+} from './generated/posts';
+export {
   FILE_UPLOADED_ROUTING_KEY,
   type FileUploadedEvent,
 } from './events/files/file-uploaded.event';
