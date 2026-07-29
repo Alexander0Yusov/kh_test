@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   IsBoolean,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -9,12 +10,19 @@ import {
   IsPositive,
   IsString,
   IsUrl,
+  Max,
+  Min,
   ValidateIf,
 } from 'class-validator';
 import { configValidationUtility } from '../../../../../libs/common/src/config/config-validation.utility';
 
 @Injectable()
 export class FilesConfig {
+  @IsIn(['development', 'testing', 'production'], {
+    message: 'Env variable NODE_ENV must be development, testing or production',
+  })
+  nodeEnv: string;
+
   @IsNumber({}, { message: 'Env variable PORT must be a number' })
   @IsNotEmpty({ message: 'Set Env variable PORT, example: 3002' })
   port: number;
@@ -31,6 +39,7 @@ export class FilesConfig {
 
   @ValidateIf(
     (config: FilesConfig) =>
+      config.nodeEnv !== 'production' ||
       config.awsAccessKeyId !== undefined ||
       config.awsSecretAccessKey !== undefined,
   )
@@ -40,6 +49,7 @@ export class FilesConfig {
 
   @ValidateIf(
     (config: FilesConfig) =>
+      config.nodeEnv !== 'production' ||
       config.awsAccessKeyId !== undefined ||
       config.awsSecretAccessKey !== undefined,
   )
@@ -47,7 +57,10 @@ export class FilesConfig {
   @IsNotEmpty({ message: 'Set both AWS credential variables or neither' })
   awsSecretAccessKey: string | undefined;
 
-  @IsOptional()
+  @ValidateIf((config: FilesConfig) => config.nodeEnv !== 'production')
+  @IsNotEmpty({
+    message: 'Set Env variable SQS_ENDPOINT outside Production',
+  })
   @IsUrl(
     { require_protocol: true },
     { message: 'Env variable S3_ENDPOINT must be a valid URL' },
@@ -77,6 +90,25 @@ export class FilesConfig {
   sqsQueueUrl: string;
 
   @IsInt({
+    message: 'Env variable SQS_WAIT_TIME_SECONDS must be an integer',
+  })
+  @Min(1, {
+    message: 'Env variable SQS_WAIT_TIME_SECONDS must be at least 1',
+  })
+  @Max(20, {
+    message: 'Env variable SQS_WAIT_TIME_SECONDS must not exceed 20',
+  })
+  sqsWaitTimeSeconds: number;
+
+  @IsInt({
+    message: 'Env variable SQS_VISIBILITY_TIMEOUT_SECONDS must be an integer',
+  })
+  @IsPositive({
+    message: 'Env variable SQS_VISIBILITY_TIMEOUT_SECONDS must be positive',
+  })
+  sqsVisibilityTimeoutSeconds: number;
+
+  @IsInt({
     message: 'Env variable FILES_MAX_UPLOAD_SIZE_BYTES must be an integer',
   })
   @IsPositive({
@@ -99,6 +131,7 @@ export class FilesConfig {
   constructor(
     private readonly configService: ConfigService<Record<string, string>, true>,
   ) {
+    this.nodeEnv = this.configService.get('NODE_ENV');
     this.port = Number(this.configService.get('PORT'));
     this.prismaDbUrl = this.configService.get('PRISMA_DB_URL');
     this.awsRegion = this.configService.get('AWS_REGION');
@@ -111,6 +144,12 @@ export class FilesConfig {
     )!;
     this.sqsEndpoint = this.configService.get('SQS_ENDPOINT');
     this.sqsQueueUrl = this.configService.get('SQS_QUEUE_URL');
+    this.sqsWaitTimeSeconds = Number(
+      this.configService.get('SQS_WAIT_TIME_SECONDS'),
+    );
+    this.sqsVisibilityTimeoutSeconds = Number(
+      this.configService.get('SQS_VISIBILITY_TIMEOUT_SECONDS'),
+    );
     this.maxUploadSizeBytes = Number(
       this.configService.get('FILES_MAX_UPLOAD_SIZE_BYTES'),
     );
@@ -120,5 +159,19 @@ export class FilesConfig {
     this.grpcUrl = this.configService.get('FILES_GRPC_URL');
 
     configValidationUtility.validateConfig(this);
+    this.validateEnvironment();
+  }
+
+  private validateEnvironment(): void {
+    if (
+      this.nodeEnv === 'production' &&
+      (this.awsAccessKeyId !== undefined ||
+        this.awsSecretAccessKey !== undefined ||
+        this.sqsEndpoint !== undefined)
+    ) {
+      throw new Error(
+        'AWS credentials and SQS_ENDPOINT must be absent in Production',
+      );
+    }
   }
 }

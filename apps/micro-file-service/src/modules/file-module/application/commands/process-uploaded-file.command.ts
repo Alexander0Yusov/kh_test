@@ -40,10 +40,15 @@ export class ProcessUploadedFileCommand {
   public constructor(public readonly fileId: string) {}
 }
 
+export type ProcessUploadedFileResult = {
+  fileId: string;
+  status: FileStatus | null;
+};
+
 @CommandHandler(ProcessUploadedFileCommand)
 export class ProcessUploadedFileHandler implements ICommandHandler<
   ProcessUploadedFileCommand,
-  void
+  ProcessUploadedFileResult
 > {
   public constructor(
     private readonly fileRepository: FileRepository,
@@ -52,30 +57,35 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
     private readonly fileEventsPublisher: FileEventsPublisher,
   ) {}
 
-  public async execute(command: ProcessUploadedFileCommand): Promise<void> {
+  public async execute(
+    command: ProcessUploadedFileCommand,
+  ): Promise<ProcessUploadedFileResult> {
     const file = await this.fileRepository.findById(command.fileId);
 
     if (file === null) {
-      throw this.notFound();
+      return { fileId: command.fileId, status: null };
     }
 
-    if (
-      file.status === FileStatus.Uploaded ||
-      file.status === FileStatus.Used ||
-      file.status === FileStatus.Failed
-    ) {
-      return;
+    if (file.status === FileStatus.Uploaded) {
+      await this.publishUploaded(file.id);
+      return { fileId: file.id, status: file.status };
+    }
+
+    if (file.status === FileStatus.Used || file.status === FileStatus.Failed) {
+      return { fileId: file.id, status: file.status };
     }
 
     if (file.status === FileStatus.Rejected) {
       await this.storageAdapter.deleteObject(file.s3Key);
-      return;
+      return { fileId: file.id, status: file.status };
     }
 
-    await this.processPending(file);
+    return this.processPending(file);
   }
 
-  private async processPending(file: FileEntity): Promise<void> {
+  private async processPending(
+    file: FileEntity,
+  ): Promise<ProcessUploadedFileResult> {
     const metadata = await this.storageAdapter.headObject(file.s3Key);
 
     if (metadata === null) {
@@ -83,19 +93,11 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
     }
 
     if (metadata.size > this.filesConfig.maxUploadSizeBytes) {
-      await this.reject(
-        file,
-        DomainExceptionCode.PayloadTooLarge,
-        'Uploaded file exceeds the configured size limit.',
-      );
+      return this.reject(file);
     }
 
     if (metadata.size <= 0 || metadata.size !== file.size) {
-      await this.reject(
-        file,
-        DomainExceptionCode.ValidationFailed,
-        'Actual file size does not match the declared size.',
-      );
+      return this.reject(file);
     }
 
     let bytes: Uint8Array | null;
@@ -107,11 +109,7 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
       );
     } catch (error: unknown) {
       if (error instanceof StorageObjectTooLargeError) {
-        await this.reject(
-          file,
-          DomainExceptionCode.PayloadTooLarge,
-          'Uploaded file exceeds the configured size limit.',
-        );
+        return this.reject(file);
       }
 
       throw error;
@@ -122,11 +120,7 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
     }
 
     if (bytes.byteLength !== metadata.size || bytes.byteLength !== file.size) {
-      await this.reject(
-        file,
-        DomainExceptionCode.ValidationFailed,
-        'Actual file size does not match the declared size.',
-      );
+      return this.reject(file);
     }
 
     let dimensions: Dimensions;
@@ -135,7 +129,7 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
       dimensions = await this.inspectContent(file.extension, bytes);
     } catch (error: unknown) {
       if (error instanceof InvalidFileContentError) {
-        await this.reject(file, error.code, error.message);
+        return this.reject(file);
       }
 
       throw error;
@@ -143,8 +137,14 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
 
     file.markUploaded(dimensions.width, dimensions.height);
     await this.fileRepository.save(file);
+    await this.publishUploaded(file.id);
+
+    return { fileId: file.id, status: file.status };
+  }
+
+  private async publishUploaded(fileId: string): Promise<void> {
     await this.fileEventsPublisher.publishUploaded({
-      fileId: file.id,
+      fileId,
       status: 'UPLOADED',
     });
   }
@@ -249,20 +249,12 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
     }
   }
 
-  private async reject(
-    file: FileEntity,
-    code: DomainExceptionCode,
-    message: string,
-  ): Promise<never> {
+  private async reject(file: FileEntity): Promise<ProcessUploadedFileResult> {
     file.markRejected();
     await this.fileRepository.save(file);
     await this.storageAdapter.deleteObject(file.s3Key);
 
-    throw new DomainException({
-      code,
-      message,
-      extensions: [{ field: 'fileId', message }],
-    });
+    return { fileId: file.id, status: file.status };
   }
 
   private notFound(): DomainException {

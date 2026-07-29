@@ -5,6 +5,7 @@ set -eu
 configure_storage_events() {
   bucket="$1"
   queue_name="$2"
+  dlq_name="$3"
 
   awslocal s3api head-bucket --bucket "$bucket" >/dev/null 2>&1 ||
     awslocal s3api create-bucket --bucket "$bucket" >/dev/null
@@ -12,6 +13,15 @@ configure_storage_events() {
   queue_url="$(awslocal sqs create-queue \
     --queue-name "$queue_name" \
     --query QueueUrl \
+    --output text)"
+  dlq_url="$(awslocal sqs create-queue \
+    --queue-name "$dlq_name" \
+    --query QueueUrl \
+    --output text)"
+  dlq_arn="$(awslocal sqs get-queue-attributes \
+    --queue-url "$dlq_url" \
+    --attribute-names QueueArn \
+    --query Attributes.QueueArn \
     --output text)"
   queue_arn="$(awslocal sqs get-queue-attributes \
     --queue-url "$queue_url" \
@@ -25,7 +35,13 @@ configure_storage_events() {
     "$bucket")"
   escaped_policy="$(printf '%s' "$policy" | sed 's/"/\\"/g')"
   attributes_file="/tmp/$queue_name-attributes.json"
-  printf '{"Policy":"%s"}' "$escaped_policy" >"$attributes_file"
+  redrive_policy="$(printf \
+    '{"deadLetterTargetArn":"%s","maxReceiveCount":"5"}' \
+    "$dlq_arn")"
+  escaped_redrive_policy="$(printf '%s' "$redrive_policy" | sed 's/"/\\"/g')"
+  printf '{"Policy":"%s","RedrivePolicy":"%s"}' \
+    "$escaped_policy" \
+    "$escaped_redrive_policy" >"$attributes_file"
   awslocal sqs set-queue-attributes \
     --queue-url "$queue_url" \
     --attributes "file://$attributes_file"
@@ -57,7 +73,9 @@ configure_storage_events() {
 
 configure_storage_events \
   'dzencode-files' \
-  'dzencode-file-upload-events-dev'
+  'dzencode-file-upload-events-dev' \
+  'dzencode-file-upload-events-dlq-dev'
 configure_storage_events \
   'dzencode-files-test' \
-  'dzencode-file-upload-events-test'
+  'dzencode-file-upload-events-test' \
+  'dzencode-file-upload-events-dlq-test'

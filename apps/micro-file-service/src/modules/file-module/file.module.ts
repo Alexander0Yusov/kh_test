@@ -8,6 +8,7 @@ import { FileRepository } from './application/contracts/file.repository';
 import { FileEventsPublisher } from './application/contracts/file-events.publisher';
 import { StorageAdapter } from './application/contracts/storage.adapter';
 import { PrismaFileRepository } from './infrastructure/prisma-file.repository';
+import { SqsStorageEventsConsumer } from './infrastructure/sqs/sqs-storage-events.consumer';
 import { S3StorageAdapter } from './infrastructure/storage/s3-storage.adapter';
 import { FilesGrpcController } from './presentation/grpc/files-grpc.controller';
 
@@ -17,6 +18,7 @@ import { FilesGrpcController } from './presentation/grpc/files-grpc.controller';
   providers: [
     CreateUploadHandler,
     ProcessUploadedFileHandler,
+    SqsStorageEventsConsumer,
     {
       provide: FileRepository,
       useClass: PrismaFileRepository,
