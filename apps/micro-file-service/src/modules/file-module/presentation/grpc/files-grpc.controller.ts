@@ -6,12 +6,14 @@ import {
   type CreateUploadResponse,
   type EnsureFileUploadedRequest,
   type EnsureFileUploadedResponse,
+  type Empty,
   type GetFilesRequest,
   type GetFilesResponse,
   FileStatus as GrpcFileStatus,
   FILES_SERVICE_NAME,
 } from '../../../../../../../libs/contracts/src';
 import { CreateUploadCommand } from '../../application/commands/create-upload.command';
+import { EraseAllDataCommand } from '../../application/commands/erase-all-data.command';
 import { EnsureFileUploadedQuery } from '../../application/queries/ensure-file-uploaded.query';
 import {
   GetFilesQuery,
@@ -58,5 +60,11 @@ export class FilesGrpcController {
         publicUrl: file.publicUrl,
       })),
     };
+  }
+
+  @GrpcMethod(FILES_SERVICE_NAME, 'EraseAllData')
+  public async eraseAllData(): Promise<Empty> {
+    await this.commandBus.execute(new EraseAllDataCommand());
+    return {};
   }
 }

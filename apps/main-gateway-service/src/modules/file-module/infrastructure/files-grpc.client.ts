@@ -97,4 +97,16 @@ export class FilesGrpcClient extends FilesClient implements OnModuleInit {
         : [{ fileId: file.fileId, publicUrl: file.publicUrl }],
     );
   }
+
+  public async eraseAllData(): Promise<void> {
+    await firstValueFrom(
+      this.filesService
+        .eraseAllData({})
+        .pipe(
+          catchError((error: ServiceError) =>
+            throwError(() => grpcErrorToDomainException(error)),
+          ),
+        ),
+    );
+  }
 }

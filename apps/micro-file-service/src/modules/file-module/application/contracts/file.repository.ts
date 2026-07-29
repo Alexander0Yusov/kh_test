@@ -8,4 +8,6 @@ export abstract class FileRepository {
   public abstract findManyByIds(ids: string[]): Promise<FileEntity[]>;
 
   public abstract save(file: FileEntity): Promise<void>;
+
+  public abstract deleteAll(): Promise<void>;
 }

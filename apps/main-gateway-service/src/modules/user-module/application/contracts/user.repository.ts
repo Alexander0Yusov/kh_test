@@ -10,4 +10,6 @@ export abstract class UserRepository {
   public abstract findByAvatarFileId(
     avatarFileId: string,
   ): Promise<UserEntity | null>;
+
+  public abstract deleteAllUsersAndSessions(): Promise<void>;
 }

@@ -116,4 +116,8 @@ export class PrismaFileRepository extends FileRepository {
       },
     });
   }
+
+  public async deleteAll(): Promise<void> {
+    await this.prisma.file.deleteMany();
+  }
 }

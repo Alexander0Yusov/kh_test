@@ -2,11 +2,14 @@ syntax = "proto3";
 
 package files.v1;
 
+import "google/protobuf/empty.proto";
+
 service FilesService {
   rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
   rpc EnsureFileUploaded(EnsureFileUploadedRequest)
       returns (EnsureFileUploadedResponse);
   rpc GetFiles(GetFilesRequest) returns (GetFilesResponse);
+  rpc EraseAllData(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
 message CreateUploadRequest {

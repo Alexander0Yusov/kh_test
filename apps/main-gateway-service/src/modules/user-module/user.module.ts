@@ -58,5 +58,6 @@ import { GetCurrentUserHandler } from './application/queries/get-current-user.qu
       useClass: JwtTokenService,
     },
   ],
+  exports: [UserRepository],
 })
 export class UserModule {}

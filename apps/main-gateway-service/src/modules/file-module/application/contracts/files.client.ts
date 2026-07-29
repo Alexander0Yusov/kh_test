@@ -22,4 +22,6 @@ export abstract class FilesClient {
   public abstract ensureUploaded(fileId: string): Promise<void>;
 
   public abstract getFiles(fileIds: string[]): Promise<GetFilesResult>;
+
+  public abstract eraseAllData(): Promise<void>;
 }

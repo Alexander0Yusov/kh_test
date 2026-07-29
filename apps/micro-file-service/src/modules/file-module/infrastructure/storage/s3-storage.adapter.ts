@@ -1,8 +1,10 @@
 import { Injectable, type OnModuleDestroy } from '@nestjs/common';
 import {
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
@@ -151,6 +153,57 @@ export class S3StorageAdapter
         Key: key,
       }),
     );
+  }
+
+  public async deleteAllObjects(): Promise<void> {
+    const keys: string[] = [];
+    let continuationToken: string | undefined;
+
+    do {
+      const page = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          ContinuationToken: continuationToken,
+        }),
+      );
+
+      keys.push(
+        ...(page.Contents ?? []).flatMap(({ Key }) =>
+          Key === undefined ? [] : [Key],
+        ),
+      );
+      if (page.IsTruncated && page.NextContinuationToken === undefined) {
+        throw new Error('Storage returned no continuation token.');
+      }
+
+      continuationToken = page.NextContinuationToken;
+    } while (continuationToken !== undefined);
+
+    for (let offset = 0; offset < keys.length; offset += 1000) {
+      const response = await this.client.send(
+        new DeleteObjectsCommand({
+          Bucket: this.bucket,
+          Delete: {
+            Objects: keys.slice(offset, offset + 1000).map((Key) => ({ Key })),
+          },
+        }),
+      );
+
+      if ((response.Errors?.length ?? 0) > 0) {
+        throw new Error('Storage failed to delete one or more objects.');
+      }
+    }
+
+    const verification = await this.client.send(
+      new ListObjectsV2Command({
+        Bucket: this.bucket,
+        MaxKeys: 1,
+      }),
+    );
+
+    if ((verification.Contents?.length ?? 0) > 0) {
+      throw new Error('Storage bucket is not empty after cleanup.');
+    }
   }
 
   public createDownloadUrl(

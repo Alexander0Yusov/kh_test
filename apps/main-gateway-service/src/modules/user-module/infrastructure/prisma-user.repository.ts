@@ -123,6 +123,13 @@ export class PrismaUserRepository extends UserRepository {
     return this.toEntity(user);
   }
 
+  public async deleteAllUsersAndSessions(): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.session.deleteMany(),
+      this.prisma.user.deleteMany(),
+    ]);
+  }
+
   private uniqueConstraintField(error: unknown): string | null {
     if (
       !(error instanceof Prisma.PrismaClientKnownRequestError) ||

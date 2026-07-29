@@ -7,6 +7,7 @@
 /* eslint-disable */
 import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
 import { Observable } from "rxjs";
+import { Empty } from "./google/protobuf/empty";
 
 export const protobufPackage = "files.v1";
 
@@ -66,6 +67,8 @@ export interface FilesServiceClient {
   ensureFileUploaded(request: EnsureFileUploadedRequest): Observable<EnsureFileUploadedResponse>;
 
   getFiles(request: GetFilesRequest): Observable<GetFilesResponse>;
+
+  eraseAllData(request: Empty): Observable<Empty>;
 }
 
 export interface FilesServiceController {
@@ -78,11 +81,13 @@ export interface FilesServiceController {
   ): Promise<EnsureFileUploadedResponse> | Observable<EnsureFileUploadedResponse> | EnsureFileUploadedResponse;
 
   getFiles(request: GetFilesRequest): Promise<GetFilesResponse> | Observable<GetFilesResponse> | GetFilesResponse;
+
+  eraseAllData(request: Empty): void | Promise<void>;
 }
 
 export function FilesServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["createUpload", "ensureFileUploaded", "getFiles"];
+    const grpcMethods: string[] = ["createUpload", "ensureFileUploaded", "getFiles", "eraseAllData"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("FilesService", method)(constructor.prototype[method], method, descriptor);

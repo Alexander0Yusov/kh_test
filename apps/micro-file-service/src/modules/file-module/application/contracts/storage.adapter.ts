@@ -38,6 +38,8 @@ export abstract class StorageAdapter {
 
   public abstract deleteObject(key: string): Promise<void>;
 
+  public abstract deleteAllObjects(): Promise<void>;
+
   public abstract createDownloadUrl(
     key: string,
     expiresInSeconds: number,

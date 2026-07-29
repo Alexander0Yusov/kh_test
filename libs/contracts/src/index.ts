@@ -12,6 +12,7 @@ export {
   type GetFilesRequest,
   type GetFilesResponse,
 } from './generated/files';
+export type { Empty } from './generated/google/protobuf/empty';
 export {
   FILE_UPLOADED_ROUTING_KEY,
   type FileUploadedEvent,

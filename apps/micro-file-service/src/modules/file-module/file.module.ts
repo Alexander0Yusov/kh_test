@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { PrismaModule } from '../../common/prisma';
 import { RabbitMqPublisher } from '../../common/rabbitmq/rabbitmq.publisher';
 import { CreateUploadHandler } from './application/commands/create-upload.command';
+import { EraseAllDataHandler } from './application/commands/erase-all-data.command';
 import { ProcessUploadedFileHandler } from './application/commands/process-uploaded-file.command';
 import { MarkFileUsedHandler } from './application/commands/mark-file-used.command';
 import { EnsureFileUploadedHandler } from './application/queries/ensure-file-uploaded.query';
@@ -21,6 +22,7 @@ import { UserCreatedConsumer } from './presentation/rabbitmq/user-created.consum
   controllers: [FilesGrpcController, UserCreatedConsumer],
   providers: [
     CreateUploadHandler,
+    EraseAllDataHandler,
     ProcessUploadedFileHandler,
     MarkFileUsedHandler,
     EnsureFileUploadedHandler,
