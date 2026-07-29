@@ -4,13 +4,13 @@ import type { ClientGrpc } from '@nestjs/microservices';
 import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { grpcErrorToDomainException } from '../../../../../../libs/bootstrap/src';
 import {
-  type CreateRootPostRequest as GrpcCreateRootPostRequest,
+  type CreatePostRequest as GrpcCreatePostRequest,
   POSTS_SERVICE_NAME,
   type PostsServiceClient,
 } from '../../../../../../libs/contracts/src';
 import {
-  type CreateRootPostRequest,
-  type CreateRootPostResult,
+  type CreatePostRequest,
+  type CreatePostResult,
   PostsClient,
 } from '../application/contracts/posts.client';
 
@@ -29,17 +29,18 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
       this.client.getService<PostsServiceClient>(POSTS_SERVICE_NAME);
   }
 
-  public async createRootPost(
-    request: CreateRootPostRequest,
-  ): Promise<CreateRootPostResult> {
-    const grpcRequest: GrpcCreateRootPostRequest = {
+  public async createPost(
+    request: CreatePostRequest,
+  ): Promise<CreatePostResult> {
+    const grpcRequest: GrpcCreatePostRequest = {
       userId: request.userId,
       message: request.message,
       attachmentFileId: request.attachmentFileId ?? undefined,
+      parentId: request.parentId ?? undefined,
     };
     const post = await firstValueFrom(
       this.postsService
-        .createRootPost(grpcRequest)
+        .createPost(grpcRequest)
         .pipe(
           catchError((error: ServiceError) =>
             throwError(() => grpcErrorToDomainException(error)),
@@ -53,6 +54,7 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
 
     return {
       id: post.id,
+      parentId: post.parentId ?? null,
       message: post.message,
       attachmentFileId: post.attachmentFileId ?? null,
       createdAt: new Date(

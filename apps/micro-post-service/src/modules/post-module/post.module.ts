@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { PrismaModule } from '../../common/prisma';
 import { EraseAllDataHandler } from './application/commands/erase-all-data.command';
-import { CreateRootPostHandler } from './application/commands/create-root-post.command';
+import { CreatePostHandler } from './application/commands/create-post.command';
 import { PostEventsPublisher } from './application/contracts/post-events.publisher';
 import { PostUserRepository } from './application/contracts/post-user.repository';
 import { PostRepository } from './application/contracts/post.repository';
@@ -19,7 +19,7 @@ import { UserCreatedConsumer } from './presentation/rabbitmq/user-created.consum
   controllers: [PostsGrpcController, UserCreatedConsumer],
   providers: [
     EraseAllDataHandler,
-    CreateRootPostHandler,
+    CreatePostHandler,
     {
       provide: PostEventsPublisher,
       useClass: RabbitMqPostEventsPublisher,

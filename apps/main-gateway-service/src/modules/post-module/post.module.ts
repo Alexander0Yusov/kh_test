@@ -13,7 +13,7 @@ import {
 } from '../../../../../libs/contracts/src';
 import { PostsClient } from './application/contracts/posts.client';
 import { PostsGrpcClient } from './infrastructure/posts-grpc.client';
-import { CreateRootPostHandler } from './application/commands/create-root-post.command';
+import { CreatePostHandler } from './application/commands/create-post.command';
 import { FileModule } from '../file-module/file.module';
 import { UserModule } from '../user-module';
 import { PostsController } from './presentation/posts.controller';
@@ -51,7 +51,7 @@ function createPostsClientOptions(config: GatewayConfig): ClientProvider {
   ],
   controllers: [PostsController],
   providers: [
-    CreateRootPostHandler,
+    CreatePostHandler,
     {
       provide: PostsClient,
       useClass: PostsGrpcClient,

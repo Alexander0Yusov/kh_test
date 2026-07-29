@@ -2,33 +2,32 @@ import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { GrpcMethod } from '@nestjs/microservices';
 import {
-  type CreateRootPostRequest,
+  type CreatePostRequest,
   type Empty,
   type PostDto,
   POSTS_SERVICE_NAME,
 } from '../../../../../../../libs/contracts/src';
 import {
-  CreateRootPostCommand,
-  type CreateRootPostResult,
-} from '../../application/commands/create-root-post.command';
+  CreatePostCommand,
+  type CreatePostResult,
+} from '../../application/commands/create-post.command';
 import { EraseAllDataCommand } from '../../application/commands/erase-all-data.command';
 
 @Controller()
 export class PostsGrpcController {
   public constructor(private readonly commandBus: CommandBus) {}
 
-  @GrpcMethod(POSTS_SERVICE_NAME, 'CreateRootPost')
-  public async createRootPost(
-    request: CreateRootPostRequest,
-  ): Promise<PostDto> {
+  @GrpcMethod(POSTS_SERVICE_NAME, 'CreatePost')
+  public async createPost(request: CreatePostRequest): Promise<PostDto> {
     const result = await this.commandBus.execute<
-      CreateRootPostCommand,
-      CreateRootPostResult
+      CreatePostCommand,
+      CreatePostResult
     >(
-      new CreateRootPostCommand(
+      new CreatePostCommand(
         request.userId,
         request.message,
         request.attachmentFileId ?? null,
+        request.parentId ?? null,
       ),
     );
     const milliseconds = result.createdAt.getTime();
@@ -36,8 +35,8 @@ export class PostsGrpcController {
     return {
       id: result.id,
       userId: result.userId,
-      parentId: undefined,
-      rootId: undefined,
+      parentId: result.parentId ?? undefined,
+      rootId: result.rootId ?? undefined,
       path: result.path,
       childCounter: result.childCounter,
       message: result.message,

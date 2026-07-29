@@ -6,14 +6,15 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service PostsService {
-  rpc CreateRootPost(CreateRootPostRequest) returns (PostDto);
+  rpc CreatePost(CreatePostRequest) returns (PostDto);
   rpc EraseAllData(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
-message CreateRootPostRequest {
+message CreatePostRequest {
   string user_id = 1;
   string message = 2;
   optional string attachment_file_id = 3;
+  optional string parent_id = 4;
 }
 
 message PostDto {

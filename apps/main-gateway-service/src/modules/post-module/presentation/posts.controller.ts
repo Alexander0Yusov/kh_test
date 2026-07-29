@@ -18,13 +18,10 @@ import {
   JwtAccessGuard,
 } from '../../user-module/presentation/access-auth';
 import {
-  CreateRootPostCommand,
-  type CreateRootPostResult,
-} from '../application/commands/create-root-post.command';
-import {
-  CreateRootPostDto,
-  CreateRootPostResponseDto,
-} from './create-root-post.dto';
+  CreatePostCommand,
+  type CreatePostResult,
+} from '../application/commands/create-post.command';
+import { CreatePostDto, CreatePostResponseDto } from './create-post.dto';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -35,24 +32,27 @@ export class PostsController {
   @UseGuards(JwtAccessGuard)
   @ApiBearerAuth('accessToken')
   @ApiOperation({
-    operationId: 'createRootPost',
-    summary: 'Create a root post',
+    operationId: 'createPost',
+    summary: 'Create a root post or a reply',
+    description:
+      'Creates a root post when parentId is absent, or a reply when parentId is provided.',
   })
-  @ApiCreatedResponse({ type: CreateRootPostResponseDto })
+  @ApiCreatedResponse({ type: CreatePostResponseDto })
   @ApiBadRequestResponse({ type: ErrorResponseDto })
   @ApiUnauthorizedResponse({ type: ErrorResponseDto })
   @ApiNotFoundResponse({ type: ErrorResponseDto })
   @ApiConflictResponse({ type: ErrorResponseDto })
   @ApiServiceUnavailableResponse({ type: ErrorResponseDto })
-  public createRootPost(
+  public createPost(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateRootPostDto,
-  ): Promise<CreateRootPostResult> {
+    @Body() dto: CreatePostDto,
+  ): Promise<CreatePostResult> {
     return this.commandBus.execute(
-      new CreateRootPostCommand(
+      new CreatePostCommand(
         user.userId,
         dto.message,
         dto.attachmentFileId ?? null,
+        dto.parentId ?? null,
       ),
     );
   }

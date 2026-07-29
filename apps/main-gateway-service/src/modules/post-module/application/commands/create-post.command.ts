@@ -16,34 +16,34 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowProtocolRelative: false,
 };
 
-export class CreateRootPostCommand {
+export class CreatePostCommand {
   public constructor(
     public readonly userId: string,
     public readonly message: string,
     public readonly attachmentFileId: string | null,
+    public readonly parentId: string | null,
   ) {}
 }
 
-export type CreateRootPostResult = {
+export type CreatePostResult = {
   id: string;
+  parentId: string | null;
   message: string;
   publishDate: Date;
   attachmentUrl: string | null;
 };
 
-@CommandHandler(CreateRootPostCommand)
-export class CreateRootPostHandler implements ICommandHandler<
-  CreateRootPostCommand,
-  CreateRootPostResult
+@CommandHandler(CreatePostCommand)
+export class CreatePostHandler implements ICommandHandler<
+  CreatePostCommand,
+  CreatePostResult
 > {
   public constructor(
     private readonly filesClient: FilesClient,
     private readonly postsClient: PostsClient,
   ) {}
 
-  public async execute(
-    command: CreateRootPostCommand,
-  ): Promise<CreateRootPostResult> {
+  public async execute(command: CreatePostCommand): Promise<CreatePostResult> {
     const message = sanitizeHtml(command.message, SANITIZE_OPTIONS).trim();
 
     if (message.length === 0) {
@@ -63,10 +63,11 @@ export class CreateRootPostHandler implements ICommandHandler<
       await this.ensureAttachmentUploaded(command.attachmentFileId);
     }
 
-    const post = await this.postsClient.createRootPost({
+    const post = await this.postsClient.createPost({
       userId: command.userId,
       message,
       attachmentFileId: command.attachmentFileId,
+      parentId: command.parentId,
     });
     let attachmentUrl: string | null = null;
 
@@ -88,6 +89,7 @@ export class CreateRootPostHandler implements ICommandHandler<
 
     return {
       id: post.id,
+      parentId: post.parentId,
       message: post.message,
       publishDate: post.createdAt,
       attachmentUrl,

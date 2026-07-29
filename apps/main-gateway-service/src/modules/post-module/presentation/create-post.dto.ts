@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
-export class CreateRootPostDto {
+export class CreatePostDto {
   @ApiProperty({
     example:
       '<strong>Hello</strong> <a href="https://example.com" title="Example">link</a>',
@@ -14,11 +14,19 @@ export class CreateRootPostDto {
   @IsOptional()
   @IsUUID()
   public attachmentFileId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  public parentId?: string;
 }
 
-export class CreateRootPostResponseDto {
+export class CreatePostResponseDto {
   @ApiProperty({ format: 'uuid' })
   public id!: string;
+
+  @ApiProperty({ format: 'uuid', nullable: true })
+  public parentId!: string | null;
 
   @ApiProperty()
   public message!: string;

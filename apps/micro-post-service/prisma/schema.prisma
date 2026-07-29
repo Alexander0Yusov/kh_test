@@ -25,6 +25,7 @@ model Post {
   @@index([userId])
   @@index([parentId])
   @@index([rootId])
+  @@unique([rootId, path])
 }
 
 model PostUser {
