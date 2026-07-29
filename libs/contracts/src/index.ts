@@ -16,7 +16,13 @@ export type { Empty } from './generated/google/protobuf/empty';
 export {
   POSTS_SERVICE_NAME,
   POSTS_V1_PACKAGE_NAME,
+  PostOptionalField,
+  RootPostSortBy,
+  SortDirection,
   type CreatePostRequest,
+  type GetRootPostsRequest,
+  type GetRootPostsResponse,
+  type PostOptionalFields,
   type PostDto,
   type PostsServiceClient,
   type PostsServiceController,

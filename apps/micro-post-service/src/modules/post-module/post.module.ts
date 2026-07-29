@@ -6,7 +6,10 @@ import { CreatePostHandler } from './application/commands/create-post.command';
 import { PostEventsPublisher } from './application/contracts/post-events.publisher';
 import { PostUserRepository } from './application/contracts/post-user.repository';
 import { PostRepository } from './application/contracts/post.repository';
+import { PostQueryRepository } from './application/contracts/post-query.repository';
+import { GetRootPostsHandler } from './application/queries/get-root-posts.query';
 import {
+  PrismaPostQueryRepository,
   PrismaPostRepository,
   PrismaPostUserRepository,
 } from './infrastructure/prisma-post.repositories';
@@ -20,6 +23,7 @@ import { UserCreatedConsumer } from './presentation/rabbitmq/user-created.consum
   providers: [
     EraseAllDataHandler,
     CreatePostHandler,
+    GetRootPostsHandler,
     {
       provide: PostEventsPublisher,
       useClass: RabbitMqPostEventsPublisher,
@@ -31,6 +35,10 @@ import { UserCreatedConsumer } from './presentation/rabbitmq/user-created.consum
     {
       provide: PostRepository,
       useClass: PrismaPostRepository,
+    },
+    {
+      provide: PostQueryRepository,
+      useClass: PrismaPostQueryRepository,
     },
   ],
 })

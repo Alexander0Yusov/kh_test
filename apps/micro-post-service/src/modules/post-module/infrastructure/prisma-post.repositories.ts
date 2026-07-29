@@ -13,6 +13,11 @@ import {
   type CreateReplyInput,
   PostRepository,
 } from '../application/contracts/post.repository';
+import {
+  type FindRootPageQuery,
+  PostQueryRepository,
+  type RootPostPageItem,
+} from '../application/contracts/post-query.repository';
 import { PostEntity } from '../domain';
 
 @Injectable()
@@ -174,5 +179,116 @@ export class PrismaPostRepository extends PostRepository {
       this.prisma.post.deleteMany(),
       this.prisma.postUser.deleteMany(),
     ]);
+  }
+}
+
+@Injectable()
+export class PrismaPostQueryRepository extends PostQueryRepository {
+  public constructor(private readonly prisma: PrismaService) {
+    super();
+  }
+
+  public async findRootPage(
+    query: FindRootPageQuery,
+  ): Promise<RootPostPageItem[]> {
+    return this.prisma.post
+      .findMany({
+        where: {
+          parentId: null,
+          ...this.positionWhere(query),
+        },
+        orderBy: this.orderBy(query),
+        take: query.limitPlusOne,
+        select: {
+          id: true,
+          createdAt: true,
+          user: {
+            select: {
+              userName: true,
+              email: true,
+            },
+          },
+        },
+      })
+      .then((rows) =>
+        rows.map((row) => ({
+          id: row.id,
+          createdAt: row.createdAt,
+          userName: row.user.userName,
+          email: row.user.email,
+        })),
+      );
+  }
+
+  private positionWhere(query: FindRootPageQuery): Prisma.PostWhereInput {
+    if (query.position === null) {
+      return {};
+    }
+
+    const comparison =
+      query.sortDirection === 'asc'
+        ? { gt: query.position.value }
+        : { lt: query.position.value };
+    const idComparison =
+      query.sortDirection === 'asc'
+        ? { gt: query.position.id }
+        : { lt: query.position.id };
+
+    switch (query.sortBy) {
+      case 'createdAt': {
+        const value = new Date(query.position.value);
+        const dateComparison =
+          query.sortDirection === 'asc' ? { gt: value } : { lt: value };
+
+        return {
+          OR: [
+            { createdAt: dateComparison },
+            { createdAt: value, id: idComparison },
+          ],
+        };
+      }
+      case 'userName':
+        return {
+          OR: [
+            { user: { userName: comparison } },
+            {
+              user: { userName: query.position.value },
+              id: idComparison,
+            },
+          ],
+        };
+      case 'email':
+        return {
+          OR: [
+            { user: { email: comparison } },
+            {
+              user: { email: query.position.value },
+              id: idComparison,
+            },
+          ],
+        };
+    }
+  }
+
+  private orderBy(
+    query: FindRootPageQuery,
+  ): Prisma.PostOrderByWithRelationInput[] {
+    switch (query.sortBy) {
+      case 'createdAt':
+        return [
+          { createdAt: query.sortDirection },
+          { id: query.sortDirection },
+        ];
+      case 'userName':
+        return [
+          { user: { userName: query.sortDirection } },
+          { id: query.sortDirection },
+        ];
+      case 'email':
+        return [
+          { user: { email: query.sortDirection } },
+          { id: query.sortDirection },
+        ];
+    }
   }
 }

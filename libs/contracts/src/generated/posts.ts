@@ -12,11 +12,56 @@ import { Timestamp } from "./google/protobuf/timestamp";
 
 export const protobufPackage = "posts.v1";
 
+export enum RootPostSortBy {
+  ROOT_POST_SORT_BY_UNSPECIFIED = 0,
+  ROOT_POST_SORT_BY_CREATED_AT = 1,
+  ROOT_POST_SORT_BY_USER_NAME = 2,
+  ROOT_POST_SORT_BY_EMAIL = 3,
+  UNRECOGNIZED = -1,
+}
+
+export enum SortDirection {
+  SORT_DIRECTION_UNSPECIFIED = 0,
+  SORT_DIRECTION_ASC = 1,
+  SORT_DIRECTION_DESC = 2,
+  UNRECOGNIZED = -1,
+}
+
+export enum PostOptionalField {
+  POST_OPTIONAL_FIELD_UNSPECIFIED = 0,
+  POST_OPTIONAL_FIELD_AVATAR = 1,
+  POST_OPTIONAL_FIELD_USER_NAME = 2,
+  POST_OPTIONAL_FIELD_EMAIL = 3,
+  POST_OPTIONAL_FIELD_HOME_PAGE = 4,
+  POST_OPTIONAL_FIELD_PUBLISH_DATE = 5,
+  POST_OPTIONAL_FIELD_ATTACHMENT = 6,
+  UNRECOGNIZED = -1,
+}
+
 export interface CreatePostRequest {
   userId: string;
   message: string;
   attachmentFileId?: string | undefined;
   parentId?: string | undefined;
+}
+
+export interface PostOptionalFields {
+  values: PostOptionalField[];
+}
+
+export interface GetRootPostsRequest {
+  cursor?: string | undefined;
+  sortBy?: RootPostSortBy | undefined;
+  sortDirection?: SortDirection | undefined;
+  limit?: number | undefined;
+  fields?: PostOptionalFields | undefined;
+}
+
+export interface GetRootPostsResponse {
+  rootIds: string[];
+  nextCursor?: string | undefined;
+  hasMore: boolean;
+  resolvedFields: PostOptionalField[];
 }
 
 export interface PostDto {
@@ -36,18 +81,24 @@ export const POSTS_V1_PACKAGE_NAME = "posts.v1";
 export interface PostsServiceClient {
   createPost(request: CreatePostRequest): Observable<PostDto>;
 
+  getRootPosts(request: GetRootPostsRequest): Observable<GetRootPostsResponse>;
+
   eraseAllData(request: Empty): Observable<Empty>;
 }
 
 export interface PostsServiceController {
   createPost(request: CreatePostRequest): Promise<PostDto> | Observable<PostDto> | PostDto;
 
+  getRootPosts(
+    request: GetRootPostsRequest,
+  ): Promise<GetRootPostsResponse> | Observable<GetRootPostsResponse> | GetRootPostsResponse;
+
   eraseAllData(request: Empty): void | Promise<void>;
 }
 
 export function PostsServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["createPost", "eraseAllData"];
+    const grpcMethods: string[] = ["createPost", "getRootPosts", "eraseAllData"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("PostsService", method)(constructor.prototype[method], method, descriptor);

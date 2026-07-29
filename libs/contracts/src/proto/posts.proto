@@ -7,7 +7,31 @@ import "google/protobuf/timestamp.proto";
 
 service PostsService {
   rpc CreatePost(CreatePostRequest) returns (PostDto);
+  rpc GetRootPosts(GetRootPostsRequest) returns (GetRootPostsResponse);
   rpc EraseAllData(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+enum RootPostSortBy {
+  ROOT_POST_SORT_BY_UNSPECIFIED = 0;
+  ROOT_POST_SORT_BY_CREATED_AT = 1;
+  ROOT_POST_SORT_BY_USER_NAME = 2;
+  ROOT_POST_SORT_BY_EMAIL = 3;
+}
+
+enum SortDirection {
+  SORT_DIRECTION_UNSPECIFIED = 0;
+  SORT_DIRECTION_ASC = 1;
+  SORT_DIRECTION_DESC = 2;
+}
+
+enum PostOptionalField {
+  POST_OPTIONAL_FIELD_UNSPECIFIED = 0;
+  POST_OPTIONAL_FIELD_AVATAR = 1;
+  POST_OPTIONAL_FIELD_USER_NAME = 2;
+  POST_OPTIONAL_FIELD_EMAIL = 3;
+  POST_OPTIONAL_FIELD_HOME_PAGE = 4;
+  POST_OPTIONAL_FIELD_PUBLISH_DATE = 5;
+  POST_OPTIONAL_FIELD_ATTACHMENT = 6;
 }
 
 message CreatePostRequest {
@@ -15,6 +39,25 @@ message CreatePostRequest {
   string message = 2;
   optional string attachment_file_id = 3;
   optional string parent_id = 4;
+}
+
+message PostOptionalFields {
+  repeated PostOptionalField values = 1;
+}
+
+message GetRootPostsRequest {
+  optional string cursor = 1;
+  optional RootPostSortBy sort_by = 2;
+  optional SortDirection sort_direction = 3;
+  optional int32 limit = 4;
+  optional PostOptionalFields fields = 5;
+}
+
+message GetRootPostsResponse {
+  repeated string root_ids = 1;
+  optional string next_cursor = 2;
+  bool has_more = 3;
+  repeated PostOptionalField resolved_fields = 4;
 }
 
 message PostDto {
