@@ -8,22 +8,45 @@
 import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
 import { Observable } from "rxjs";
 import { Empty } from "./google/protobuf/empty";
+import { Timestamp } from "./google/protobuf/timestamp";
 
 export const protobufPackage = "posts.v1";
+
+export interface CreateRootPostRequest {
+  userId: string;
+  message: string;
+  attachmentFileId?: string | undefined;
+}
+
+export interface PostDto {
+  id: string;
+  userId: string;
+  parentId?: string | undefined;
+  rootId?: string | undefined;
+  path: string;
+  childCounter: number;
+  message: string;
+  attachmentFileId?: string | undefined;
+  createdAt: Timestamp | undefined;
+}
 
 export const POSTS_V1_PACKAGE_NAME = "posts.v1";
 
 export interface PostsServiceClient {
+  createRootPost(request: CreateRootPostRequest): Observable<PostDto>;
+
   eraseAllData(request: Empty): Observable<Empty>;
 }
 
 export interface PostsServiceController {
+  createRootPost(request: CreateRootPostRequest): Promise<PostDto> | Observable<PostDto> | PostDto;
+
   eraseAllData(request: Empty): void | Promise<void>;
 }
 
 export function PostsServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["eraseAllData"];
+    const grpcMethods: string[] = ["createRootPost", "eraseAllData"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("PostsService", method)(constructor.prototype[method], method, descriptor);

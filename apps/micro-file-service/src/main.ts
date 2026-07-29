@@ -8,6 +8,7 @@ import { FILES_V1_PACKAGE_NAME } from '../../../libs/contracts/src';
 import { FilesConfig } from './common/config/files-config';
 import { CoreConfig } from '../../../libs/common/src/config/core-config';
 import { setupUserEventsTopology } from './common/rabbitmq/setup-user-events-topology';
+import { setupPostEventsTopology } from './common/rabbitmq/setup-post-events-topology';
 
 async function bootstrap(): Promise<void> {
   loadServiceEnvironment(join(process.cwd(), 'apps', 'micro-file-service'));
@@ -19,6 +20,7 @@ async function bootstrap(): Promise<void> {
   const coreConfig = app.get(CoreConfig);
 
   await setupUserEventsTopology(coreConfig);
+  await setupPostEventsTopology(coreConfig);
   setupGrpcFilters(app);
 
   app.connectMicroservice<MicroserviceOptions>(
@@ -48,6 +50,19 @@ async function bootstrap(): Promise<void> {
     options: {
       urls: [coreConfig.rabbitmqUrl],
       queue: coreConfig.rabbitMqFilesUserEventsQueue,
+      queueOptions: {
+        durable: true,
+      },
+      noAck: false,
+      prefetchCount: 1,
+    },
+  });
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [coreConfig.rabbitmqUrl],
+      queue: coreConfig.rabbitMqFilesPostEventsQueue,
       queueOptions: {
         durable: true,
       },

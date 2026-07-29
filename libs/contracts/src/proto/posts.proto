@@ -3,7 +3,27 @@ syntax = "proto3";
 package posts.v1;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 service PostsService {
+  rpc CreateRootPost(CreateRootPostRequest) returns (PostDto);
   rpc EraseAllData(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message CreateRootPostRequest {
+  string user_id = 1;
+  string message = 2;
+  optional string attachment_file_id = 3;
+}
+
+message PostDto {
+  string id = 1;
+  string user_id = 2;
+  optional string parent_id = 3;
+  optional string root_id = 4;
+  string path = 5;
+  int32 child_counter = 6;
+  string message = 7;
+  optional string attachment_file_id = 8;
+  google.protobuf.Timestamp created_at = 9;
 }

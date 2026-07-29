@@ -16,6 +16,8 @@ export type { Empty } from './generated/google/protobuf/empty';
 export {
   POSTS_SERVICE_NAME,
   POSTS_V1_PACKAGE_NAME,
+  type CreateRootPostRequest,
+  type PostDto,
   type PostsServiceClient,
   type PostsServiceController,
 } from './generated/posts';
@@ -27,3 +29,7 @@ export {
   USER_CREATED_ROUTING_KEY,
   type UserCreatedEvent,
 } from './events/users/user-created.event';
+export {
+  POST_CREATED_ROUTING_KEY,
+  type PostCreatedEvent,
+} from './events/posts/post-created.event';

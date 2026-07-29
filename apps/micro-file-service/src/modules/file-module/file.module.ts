@@ -16,10 +16,11 @@ import { SqsStorageEventsConsumer } from './infrastructure/sqs/sqs-storage-event
 import { S3StorageAdapter } from './infrastructure/storage/s3-storage.adapter';
 import { FilesGrpcController } from './presentation/grpc/files-grpc.controller';
 import { UserCreatedConsumer } from './presentation/rabbitmq/user-created.consumer';
+import { PostCreatedConsumer } from './presentation/rabbitmq/post-created.consumer';
 
 @Module({
   imports: [CqrsModule, PrismaModule],
-  controllers: [FilesGrpcController, UserCreatedConsumer],
+  controllers: [FilesGrpcController, UserCreatedConsumer, PostCreatedConsumer],
   providers: [
     CreateUploadHandler,
     EraseAllDataHandler,

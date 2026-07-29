@@ -84,4 +84,17 @@ export class CoreConfig {
         throw new Error(`Unsupported NODE_ENV value: ${this.nodeEnv}`);
     }
   }
+
+  public get rabbitMqFilesPostEventsQueue(): string {
+    switch (this.nodeEnv) {
+      case 'development':
+        return 'files.post-events.dev';
+      case 'testing':
+        return 'files.post-events.test';
+      case 'production':
+        return 'files.post-events.prod';
+      default:
+        throw new Error(`Unsupported NODE_ENV value: ${this.nodeEnv}`);
+    }
+  }
 }

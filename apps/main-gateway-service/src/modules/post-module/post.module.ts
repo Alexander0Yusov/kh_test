@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import {
   type ClientProvider,
   ClientsModule,
@@ -12,6 +13,10 @@ import {
 } from '../../../../../libs/contracts/src';
 import { PostsClient } from './application/contracts/posts.client';
 import { PostsGrpcClient } from './infrastructure/posts-grpc.client';
+import { CreateRootPostHandler } from './application/commands/create-root-post.command';
+import { FileModule } from '../file-module/file.module';
+import { UserModule } from '../user-module';
+import { PostsController } from './presentation/posts.controller';
 
 function createPostsClientOptions(config: GatewayConfig): ClientProvider {
   return {
@@ -33,6 +38,9 @@ function createPostsClientOptions(config: GatewayConfig): ClientProvider {
 
 @Module({
   imports: [
+    CqrsModule,
+    FileModule,
+    UserModule,
     ClientsModule.registerAsync([
       {
         name: POSTS_SERVICE_NAME,
@@ -41,7 +49,9 @@ function createPostsClientOptions(config: GatewayConfig): ClientProvider {
       },
     ]),
   ],
+  controllers: [PostsController],
   providers: [
+    CreateRootPostHandler,
     {
       provide: PostsClient,
       useClass: PostsGrpcClient,
