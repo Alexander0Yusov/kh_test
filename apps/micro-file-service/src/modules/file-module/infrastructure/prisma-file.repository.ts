@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { FileStatus as PrismaFileStatus } from '../../../../prisma/generated/client';
+import {
+  type File as PrismaFile,
+  FileStatus as PrismaFileStatus,
+} from '../../../../prisma/generated/client';
 import { PrismaService } from '../../../common/prisma';
 import { FileRepository } from '../application/contracts/file.repository';
 import { FileEntity, FileStatus } from '../domain';
@@ -32,6 +35,22 @@ function toDomainStatus(status: PrismaFileStatus): FileStatus {
     case PrismaFileStatus.FAILED:
       return FileStatus.Failed;
   }
+}
+
+function toDomainEntity(file: PrismaFile): FileEntity {
+  return new FileEntity({
+    id: file.id,
+    s3Key: file.s3Key,
+    bucket: file.bucket,
+    extension: file.extension,
+    size: file.size,
+    width: file.width,
+    height: file.height,
+    status: toDomainStatus(file.status),
+    createdAt: file.createdAt,
+    updatedAt: file.updatedAt,
+    deletedAt: file.deletedAt,
+  });
 }
 
 @Injectable()
@@ -69,19 +88,19 @@ export class PrismaFileRepository extends FileRepository {
       return null;
     }
 
-    return new FileEntity({
-      id: file.id,
-      s3Key: file.s3Key,
-      bucket: file.bucket,
-      extension: file.extension,
-      size: file.size,
-      width: file.width,
-      height: file.height,
-      status: toDomainStatus(file.status),
-      createdAt: file.createdAt,
-      updatedAt: file.updatedAt,
-      deletedAt: file.deletedAt,
+    return toDomainEntity(file);
+  }
+
+  public async findManyByIds(ids: string[]): Promise<FileEntity[]> {
+    const files = await this.prisma.file.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
     });
+
+    return files.map(toDomainEntity);
   }
 
   public async save(file: FileEntity): Promise<void> {

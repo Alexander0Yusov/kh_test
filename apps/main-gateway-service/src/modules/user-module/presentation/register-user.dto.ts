@@ -54,7 +54,7 @@ export class RegisterUserDto {
     example: '00000000-0000-4000-8000-000000000001',
     format: 'uuid',
     description:
-      'Identifier of a previously uploaded avatar file. File status verification will be enforced after ConfirmUpload/GetFile integration.',
+      'Identifier of a previously uploaded avatar file verified during registration.',
   })
   @IsUUID()
   public avatarFileId!: string;

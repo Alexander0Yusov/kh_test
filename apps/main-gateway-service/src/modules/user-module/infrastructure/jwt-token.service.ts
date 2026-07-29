@@ -52,13 +52,25 @@ export class JwtTokenService extends TokenService {
   }
 
   public async verifyRefreshToken(token: string): Promise<TokenPayload | null> {
+    return this.verifyToken(token, 'refresh', this.config.jwtRefreshSecret);
+  }
+
+  public async verifyAccessToken(token: string): Promise<TokenPayload | null> {
+    return this.verifyToken(token, 'access', this.config.jwtAccessSecret);
+  }
+
+  private async verifyToken(
+    token: string,
+    type: TokenPayload['type'],
+    secret: string,
+  ): Promise<TokenPayload | null> {
     try {
       const payload = await this.jwtService.verifyAsync<TokenPayload>(token, {
-        secret: this.config.jwtRefreshSecret,
+        secret,
       });
 
       if (
-        payload.type !== 'refresh' ||
+        payload.type !== type ||
         typeof payload.sub !== 'string' ||
         payload.sub.length === 0 ||
         typeof payload.sid !== 'string' ||
@@ -70,7 +82,7 @@ export class JwtTokenService extends TokenService {
       return {
         sub: payload.sub,
         sid: payload.sid,
-        type: payload.type,
+        type,
       };
     } catch {
       return null;

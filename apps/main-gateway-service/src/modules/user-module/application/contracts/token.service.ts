@@ -18,4 +18,8 @@ export abstract class TokenService {
   public abstract verifyRefreshToken(
     token: string,
   ): Promise<TokenPayload | null>;
+
+  public abstract verifyAccessToken(
+    token: string,
+  ): Promise<TokenPayload | null>;
 }

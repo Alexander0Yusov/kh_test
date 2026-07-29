@@ -5,5 +5,7 @@ export abstract class FileRepository {
 
   public abstract findById(id: string): Promise<FileEntity | null>;
 
+  public abstract findManyByIds(ids: string[]): Promise<FileEntity[]>;
+
   public abstract save(file: FileEntity): Promise<void>;
 }

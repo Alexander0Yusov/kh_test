@@ -59,5 +59,6 @@ function createFilesClientOptions(config: GatewayConfig): ClientProvider {
       useClass: FilesGrpcClient,
     },
   ],
+  exports: [FilesClient],
 })
 export class FileModule {}

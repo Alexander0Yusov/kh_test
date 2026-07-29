@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { type MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'node:path';
@@ -7,16 +6,22 @@ import { setupGrpcFilters } from '../../../libs/bootstrap/src';
 import { loadServiceEnvironment } from '../../../libs/common/src/config';
 import { FILES_V1_PACKAGE_NAME } from '../../../libs/contracts/src';
 import { FilesConfig } from './common/config/files-config';
+import { CoreConfig } from '../../../libs/common/src/config/core-config';
+import { setupUserEventsTopology } from './common/rabbitmq/setup-user-events-topology';
 
 async function bootstrap(): Promise<void> {
   loadServiceEnvironment(join(process.cwd(), 'apps', 'micro-file-service'));
 
-  const filesConfig = new FilesConfig(
-    new ConfigService<Record<string, string>, true>(),
-  );
+  const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
 
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
+  const filesConfig = app.get(FilesConfig);
+  const coreConfig = app.get(CoreConfig);
+
+  await setupUserEventsTopology(coreConfig);
+  setupGrpcFilters(app);
+
+  app.connectMicroservice<MicroserviceOptions>(
     {
       transport: Transport.GRPC,
       options: {
@@ -35,11 +40,24 @@ async function bootstrap(): Promise<void> {
         },
       },
     },
+    { inheritAppConfig: true },
   );
-  app.enableShutdownHooks();
-  setupGrpcFilters(app);
 
-  await app.listen();
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [coreConfig.rabbitmqUrl],
+      queue: coreConfig.rabbitMqFilesUserEventsQueue,
+      queueOptions: {
+        durable: true,
+      },
+      noAck: false,
+      prefetchCount: 1,
+    },
+  });
+
+  await app.startAllMicroservices();
+  await app.init();
 }
 
 void bootstrap();

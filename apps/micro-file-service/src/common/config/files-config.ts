@@ -124,6 +124,14 @@ export class FilesConfig {
   })
   presignedPostTtlSeconds: number;
 
+  @IsInt({
+    message: 'Env variable FILES_DOWNLOAD_URL_TTL_SECONDS must be an integer',
+  })
+  @IsPositive({
+    message: 'Env variable FILES_DOWNLOAD_URL_TTL_SECONDS must be positive',
+  })
+  downloadUrlTtlSeconds: number;
+
   @IsString({ message: 'Env variable FILES_GRPC_URL must be a string' })
   @IsNotEmpty({ message: 'Set Env variable FILES_GRPC_URL' })
   grpcUrl: string;
@@ -155,6 +163,9 @@ export class FilesConfig {
     );
     this.presignedPostTtlSeconds = Number(
       this.configService.get('FILES_PRESIGNED_POST_TTL_SECONDS'),
+    );
+    this.downloadUrlTtlSeconds = Number(
+      this.configService.get('FILES_DOWNLOAD_URL_TTL_SECONDS'),
     );
     this.grpcUrl = this.configService.get('FILES_GRPC_URL');
 

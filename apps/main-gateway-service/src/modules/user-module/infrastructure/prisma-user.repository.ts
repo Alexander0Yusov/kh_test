@@ -30,7 +30,9 @@ export class PrismaUserRepository extends UserRepository {
         },
       });
     } catch (error: unknown) {
-      if (this.isEmailUniqueConstraint(error)) {
+      const uniqueField = this.uniqueConstraintField(error);
+
+      if (uniqueField === 'email') {
         throw new DomainException({
           code: DomainExceptionCode.EmailAlreadyExists,
           message: 'A user with this email already exists.',
@@ -38,6 +40,19 @@ export class PrismaUserRepository extends UserRepository {
             {
               field: 'email',
               message: 'A user with this email already exists.',
+            },
+          ],
+        });
+      }
+
+      if (uniqueField === 'avatarFileId') {
+        throw new DomainException({
+          code: DomainExceptionCode.AlreadyExists,
+          message: 'This avatar file is already in use.',
+          extensions: [
+            {
+              field: 'avatarFileId',
+              message: 'This avatar file is already in use.',
             },
           ],
         });
@@ -59,6 +74,28 @@ export class PrismaUserRepository extends UserRepository {
       return null;
     }
 
+    return this.toEntity(user);
+  }
+
+  public async findById(id: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    return user === null ? null : this.toEntity(user);
+  }
+
+  private toEntity(user: {
+    id: string;
+    email: string;
+    userName: string;
+    passwordHash: string;
+    homePage: string;
+    avatarFileId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
+  }): UserEntity {
     return new UserEntity({
       id: user.id,
       email: user.email,
@@ -72,20 +109,37 @@ export class PrismaUserRepository extends UserRepository {
     });
   }
 
-  private isEmailUniqueConstraint(error: unknown): boolean {
+  public async findByAvatarFileId(
+    avatarFileId: string,
+  ): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { avatarFileId },
+    });
+
+    if (user === null) {
+      return null;
+    }
+
+    return this.toEntity(user);
+  }
+
+  private uniqueConstraintField(error: unknown): string | null {
     if (
       !(error instanceof Prisma.PrismaClientKnownRequestError) ||
       error.code !== 'P2002'
     ) {
-      return false;
+      return null;
     }
 
     const target = error.meta?.target;
 
-    return (
-      (Array.isArray(target) && target.includes('email')) ||
-      (typeof target === 'string' && target.includes('email')) ||
-      error.message.includes('(`email`)')
-    );
+    if (Array.isArray(target)) {
+      const field = target.find(
+        (value): value is string => typeof value === 'string',
+      );
+      return field ?? null;
+    }
+
+    return typeof target === 'string' ? target : null;
   }
 }

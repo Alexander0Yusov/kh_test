@@ -7,6 +7,7 @@ import {
   S3ServiceException,
 } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FilesConfig } from '../../../../common/config/files-config';
 import {
   type CreatePresignedPostParams,
@@ -149,6 +150,26 @@ export class S3StorageAdapter
         Bucket: this.bucket,
         Key: key,
       }),
+    );
+  }
+
+  public createDownloadUrl(
+    key: string,
+    expiresInSeconds: number,
+  ): Promise<string> {
+    this.validateKey(key);
+
+    if (!Number.isInteger(expiresInSeconds) || expiresInSeconds <= 0) {
+      throw new RangeError('Download URL TTL must be a positive integer.');
+    }
+
+    return getSignedUrl(
+      this.client,
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+      { expiresIn: expiresInSeconds },
     );
   }
 

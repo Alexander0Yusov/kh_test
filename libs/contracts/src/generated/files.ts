@@ -36,12 +36,24 @@ export interface CreateUploadResponse_UploadFieldsEntry {
   value: string;
 }
 
-export interface GetFileRequest {
+export interface EnsureFileUploadedRequest {
   fileId: string;
 }
 
+export interface EnsureFileUploadedResponse {
+  fileId: string;
+}
+
+export interface GetFilesRequest {
+  fileIds: string[];
+}
+
+export interface GetFilesResponse {
+  files: FileDto[];
+}
+
 export interface FileDto {
-  id: string;
+  fileId: string;
   status: FileStatus;
   publicUrl?: string | undefined;
 }
@@ -51,7 +63,9 @@ export const FILES_V1_PACKAGE_NAME = "files.v1";
 export interface FilesServiceClient {
   createUpload(request: CreateUploadRequest): Observable<CreateUploadResponse>;
 
-  getFile(request: GetFileRequest): Observable<FileDto>;
+  ensureFileUploaded(request: EnsureFileUploadedRequest): Observable<EnsureFileUploadedResponse>;
+
+  getFiles(request: GetFilesRequest): Observable<GetFilesResponse>;
 }
 
 export interface FilesServiceController {
@@ -59,12 +73,16 @@ export interface FilesServiceController {
     request: CreateUploadRequest,
   ): Promise<CreateUploadResponse> | Observable<CreateUploadResponse> | CreateUploadResponse;
 
-  getFile(request: GetFileRequest): Promise<FileDto> | Observable<FileDto> | FileDto;
+  ensureFileUploaded(
+    request: EnsureFileUploadedRequest,
+  ): Promise<EnsureFileUploadedResponse> | Observable<EnsureFileUploadedResponse> | EnsureFileUploadedResponse;
+
+  getFiles(request: GetFilesRequest): Promise<GetFilesResponse> | Observable<GetFilesResponse> | GetFilesResponse;
 }
 
 export function FilesServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["createUpload", "getFile"];
+    const grpcMethods: string[] = ["createUpload", "ensureFileUploaded", "getFiles"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("FilesService", method)(constructor.prototype[method], method, descriptor);

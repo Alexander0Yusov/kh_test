@@ -4,7 +4,9 @@ package files.v1;
 
 service FilesService {
   rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
-  rpc GetFile(GetFileRequest) returns (FileDto);
+  rpc EnsureFileUploaded(EnsureFileUploadedRequest)
+      returns (EnsureFileUploadedResponse);
+  rpc GetFiles(GetFilesRequest) returns (GetFilesResponse);
 }
 
 message CreateUploadRequest {
@@ -18,12 +20,24 @@ message CreateUploadResponse {
   string file_id = 3;
 }
 
-message GetFileRequest {
+message EnsureFileUploadedRequest {
   string file_id = 1;
 }
 
+message EnsureFileUploadedResponse {
+  string file_id = 1;
+}
+
+message GetFilesRequest {
+  repeated string file_ids = 1;
+}
+
+message GetFilesResponse {
+  repeated FileDto files = 1;
+}
+
 message FileDto {
-  string id = 1;
+  string file_id = 1;
   FileStatus status = 2;
   optional string public_url = 3;
 }

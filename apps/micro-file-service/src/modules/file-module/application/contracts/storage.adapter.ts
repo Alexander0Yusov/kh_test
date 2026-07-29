@@ -37,4 +37,9 @@ export abstract class StorageAdapter {
   ): Promise<Uint8Array | null>;
 
   public abstract deleteObject(key: string): Promise<void>;
+
+  public abstract createDownloadUrl(
+    key: string,
+    expiresInSeconds: number,
+  ): Promise<string>;
 }
