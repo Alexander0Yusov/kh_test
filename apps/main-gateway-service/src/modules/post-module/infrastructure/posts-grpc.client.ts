@@ -58,10 +58,12 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
     );
 
     return {
-      rootIds: response.rootIds,
+      rootIds: response.rootIds ?? [],
       nextCursor: response.nextCursor,
       hasMore: response.hasMore,
-      resolvedFields: response.resolvedFields.map(fromGrpcOptionalField),
+      resolvedFields: (response.resolvedFields ?? []).map(
+        fromGrpcOptionalField,
+      ),
     };
   }
 
@@ -76,7 +78,7 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
         ),
     );
 
-    return response.posts.map((post) => {
+    return (response.posts ?? []).map((post) => {
       if (post.createdAt === undefined) {
         throw new Error('Posts Service returned no creation timestamp.');
       }

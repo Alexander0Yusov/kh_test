@@ -88,7 +88,9 @@ export class PostsGrpcController {
         toSortBy(request.sortBy),
         toSortDirection(request.sortDirection),
         request.limit,
-        request.fields?.values.map(toOptionalField),
+        request.fields === undefined
+          ? undefined
+          : (request.fields.values ?? []).map(toOptionalField),
       ),
     );
 

@@ -1,11 +1,12 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiServiceUnavailableResponse,
   ApiTags,
@@ -22,11 +23,42 @@ import {
   type CreatePostResult,
 } from '../application/commands/create-post.command';
 import { CreatePostDto, CreatePostResponseDto } from './create-post.dto';
+import { GetPostsQueryDto, GetPostsResponseDto } from './get-posts.dto';
+import {
+  GetPostsQuery,
+  type GetPostsResult,
+} from '../application/queries/get-posts.query';
 
 @ApiTags('Posts')
 @Controller('posts')
 export class PostsController {
-  public constructor(private readonly commandBus: CommandBus) {}
+  public constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  @Get()
+  @ApiOperation({
+    operationId: 'getPosts',
+    summary: 'Get a flat page of post trees',
+    description:
+      'Returns selected root posts and all descendants as one flat display-ready array.',
+  })
+  @ApiOkResponse({ type: GetPostsResponseDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiConflictResponse({ type: ErrorResponseDto })
+  @ApiServiceUnavailableResponse({ type: ErrorResponseDto })
+  public getPosts(@Query() dto: GetPostsQueryDto): Promise<GetPostsResult> {
+    return this.queryBus.execute(
+      new GetPostsQuery(
+        dto.cursor,
+        dto.sortBy,
+        dto.sortDirection,
+        dto.limit,
+        dto.fields,
+      ),
+    );
+  }
 
   @Post()
   @UseGuards(JwtAccessGuard)

@@ -85,6 +85,17 @@ export class PrismaUserRepository extends UserRepository {
     return user === null ? null : this.toEntity(user);
   }
 
+  public async findManyByIds(ids: string[]): Promise<UserEntity[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: { in: [...new Set(ids)] },
+        deletedAt: null,
+      },
+    });
+
+    return users.map((user) => this.toEntity(user));
+  }
+
   private toEntity(user: {
     id: string;
     email: string;
