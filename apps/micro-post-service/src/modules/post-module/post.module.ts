@@ -8,6 +8,7 @@ import { PostUserRepository } from './application/contracts/post-user.repository
 import { PostRepository } from './application/contracts/post.repository';
 import { PostQueryRepository } from './application/contracts/post-query.repository';
 import { GetRootPostsHandler } from './application/queries/get-root-posts.query';
+import { GetPostsByRootIdsHandler } from './application/queries/get-posts-by-root-ids.query';
 import {
   PrismaPostQueryRepository,
   PrismaPostRepository,
@@ -24,6 +25,7 @@ import { UserCreatedConsumer } from './presentation/rabbitmq/user-created.consum
     EraseAllDataHandler,
     CreatePostHandler,
     GetRootPostsHandler,
+    GetPostsByRootIdsHandler,
     {
       provide: PostEventsPublisher,
       useClass: RabbitMqPostEventsPublisher,

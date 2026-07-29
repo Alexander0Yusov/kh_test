@@ -6,6 +6,8 @@ import {
   type Empty,
   type GetRootPostsRequest,
   type GetRootPostsResponse,
+  type GetPostsByRootIdsRequest,
+  type GetPostsByRootIdsResponse,
   PostOptionalField as GrpcPostOptionalField,
   type PostDto,
   POSTS_SERVICE_NAME,
@@ -26,6 +28,10 @@ import {
   type GetRootPostsResult,
   type PostOptionalField,
 } from '../../application/queries/get-root-posts.query';
+import {
+  GetPostsByRootIdsQuery,
+  type GetPostsByRootIdsResult,
+} from '../../application/queries/get-posts-by-root-ids.query';
 import type {
   RootPostSortBy,
   SortDirection,
@@ -91,6 +97,37 @@ export class PostsGrpcController {
       nextCursor: result.nextCursor,
       hasMore: result.hasMore,
       resolvedFields: result.resolvedFields.map(toGrpcOptionalField),
+    };
+  }
+
+  @GrpcMethod(POSTS_SERVICE_NAME, 'GetPostsByRootIds')
+  public async getPostsByRootIds(
+    request: GetPostsByRootIdsRequest,
+  ): Promise<GetPostsByRootIdsResponse> {
+    const result = await this.queryBus.execute<
+      GetPostsByRootIdsQuery,
+      GetPostsByRootIdsResult
+    >(new GetPostsByRootIdsQuery(request.rootIds ?? []));
+
+    return {
+      posts: result.posts.map((post) => {
+        const milliseconds = post.createdAt.getTime();
+
+        return {
+          id: post.id,
+          userId: post.userId,
+          parentId: post.parentId ?? undefined,
+          rootId: post.rootId ?? undefined,
+          path: post.path,
+          childCounter: undefined,
+          message: post.message,
+          attachmentFileId: post.attachmentFileId ?? undefined,
+          createdAt: {
+            seconds: Math.floor(milliseconds / 1000),
+            nanos: (milliseconds % 1000) * 1_000_000,
+          },
+        };
+      }),
     };
   }
 

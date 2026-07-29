@@ -8,6 +8,8 @@ import "google/protobuf/timestamp.proto";
 service PostsService {
   rpc CreatePost(CreatePostRequest) returns (PostDto);
   rpc GetRootPosts(GetRootPostsRequest) returns (GetRootPostsResponse);
+  rpc GetPostsByRootIds(GetPostsByRootIdsRequest)
+      returns (GetPostsByRootIdsResponse);
   rpc EraseAllData(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
@@ -60,13 +62,21 @@ message GetRootPostsResponse {
   repeated PostOptionalField resolved_fields = 4;
 }
 
+message GetPostsByRootIdsRequest {
+  repeated string root_ids = 1;
+}
+
+message GetPostsByRootIdsResponse {
+  repeated PostDto posts = 1;
+}
+
 message PostDto {
   string id = 1;
   string user_id = 2;
   optional string parent_id = 3;
   optional string root_id = 4;
   string path = 5;
-  int32 child_counter = 6;
+  optional int32 child_counter = 6;
   string message = 7;
   optional string attachment_file_id = 8;
   google.protobuf.Timestamp created_at = 9;

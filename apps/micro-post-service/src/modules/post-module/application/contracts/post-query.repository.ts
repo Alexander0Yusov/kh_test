@@ -20,8 +20,21 @@ export type RootPostPageItem = {
   email: string;
 };
 
+export type PostTreeRow = {
+  id: string;
+  userId: string;
+  parentId: string | null;
+  rootId: string | null;
+  path: string;
+  message: string;
+  attachmentFileId: string | null;
+  createdAt: Date;
+};
+
 export abstract class PostQueryRepository {
   public abstract findRootPage(
     query: FindRootPageQuery,
   ): Promise<RootPostPageItem[]>;
+
+  public abstract findByRootIds(rootIds: string[]): Promise<PostTreeRow[]>;
 }

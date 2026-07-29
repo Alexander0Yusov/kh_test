@@ -33,6 +33,17 @@ export type GetRootPostsResult = {
   resolvedFields: PostOptionalField[];
 };
 
+export type PostTreeItem = {
+  id: string;
+  userId: string;
+  parentId: string | null;
+  rootId: string | null;
+  path: string;
+  message: string;
+  attachmentFileId: string | null;
+  createdAt: Date;
+};
+
 export abstract class PostsClient {
   public abstract createPost(
     request: CreatePostRequest,
@@ -41,6 +52,8 @@ export abstract class PostsClient {
   public abstract getRootPosts(
     input: GetRootPostsInput,
   ): Promise<GetRootPostsResult>;
+
+  public abstract getPostsByRootIds(rootIds: string[]): Promise<PostTreeItem[]>;
 
   public abstract eraseAllData(): Promise<void>;
 }

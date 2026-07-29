@@ -64,13 +64,21 @@ export interface GetRootPostsResponse {
   resolvedFields: PostOptionalField[];
 }
 
+export interface GetPostsByRootIdsRequest {
+  rootIds: string[];
+}
+
+export interface GetPostsByRootIdsResponse {
+  posts: PostDto[];
+}
+
 export interface PostDto {
   id: string;
   userId: string;
   parentId?: string | undefined;
   rootId?: string | undefined;
   path: string;
-  childCounter: number;
+  childCounter?: number | undefined;
   message: string;
   attachmentFileId?: string | undefined;
   createdAt: Timestamp | undefined;
@@ -83,6 +91,8 @@ export interface PostsServiceClient {
 
   getRootPosts(request: GetRootPostsRequest): Observable<GetRootPostsResponse>;
 
+  getPostsByRootIds(request: GetPostsByRootIdsRequest): Observable<GetPostsByRootIdsResponse>;
+
   eraseAllData(request: Empty): Observable<Empty>;
 }
 
@@ -93,12 +103,16 @@ export interface PostsServiceController {
     request: GetRootPostsRequest,
   ): Promise<GetRootPostsResponse> | Observable<GetRootPostsResponse> | GetRootPostsResponse;
 
+  getPostsByRootIds(
+    request: GetPostsByRootIdsRequest,
+  ): Promise<GetPostsByRootIdsResponse> | Observable<GetPostsByRootIdsResponse> | GetPostsByRootIdsResponse;
+
   eraseAllData(request: Empty): void | Promise<void>;
 }
 
 export function PostsServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["createPost", "getRootPosts", "eraseAllData"];
+    const grpcMethods: string[] = ["createPost", "getRootPosts", "getPostsByRootIds", "eraseAllData"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("PostsService", method)(constructor.prototype[method], method, descriptor);

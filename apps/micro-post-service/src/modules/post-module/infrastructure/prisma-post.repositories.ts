@@ -17,6 +17,7 @@ import {
   type FindRootPageQuery,
   PostQueryRepository,
   type RootPostPageItem,
+  type PostTreeRow,
 } from '../application/contracts/post-query.repository';
 import { PostEntity } from '../domain';
 
@@ -218,6 +219,33 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
           email: row.user.email,
         })),
       );
+  }
+
+  public findByRootIds(rootIds: string[]): Promise<PostTreeRow[]> {
+    return this.prisma.post.findMany({
+      where: {
+        deletedAt: null,
+        OR: [
+          {
+            id: { in: rootIds },
+            parentId: null,
+          },
+          {
+            rootId: { in: rootIds },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        userId: true,
+        parentId: true,
+        rootId: true,
+        path: true,
+        message: true,
+        attachmentFileId: true,
+        createdAt: true,
+      },
+    });
   }
 
   private positionWhere(query: FindRootPageQuery): Prisma.PostWhereInput {

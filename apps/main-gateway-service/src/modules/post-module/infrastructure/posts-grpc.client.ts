@@ -17,6 +17,7 @@ import {
   type GetRootPostsInput,
   type GetRootPostsResult,
   type PostOptionalField,
+  type PostTreeItem,
   PostsClient,
 } from '../application/contracts/posts.client';
 
@@ -62,6 +63,38 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
       hasMore: response.hasMore,
       resolvedFields: response.resolvedFields.map(fromGrpcOptionalField),
     };
+  }
+
+  public async getPostsByRootIds(rootIds: string[]): Promise<PostTreeItem[]> {
+    const response = await firstValueFrom(
+      this.postsService
+        .getPostsByRootIds({ rootIds })
+        .pipe(
+          catchError((error: ServiceError) =>
+            throwError(() => grpcErrorToDomainException(error)),
+          ),
+        ),
+    );
+
+    return response.posts.map((post) => {
+      if (post.createdAt === undefined) {
+        throw new Error('Posts Service returned no creation timestamp.');
+      }
+
+      return {
+        id: post.id,
+        userId: post.userId,
+        parentId: post.parentId ?? null,
+        rootId: post.rootId ?? null,
+        path: post.path,
+        message: post.message,
+        attachmentFileId: post.attachmentFileId ?? null,
+        createdAt: new Date(
+          post.createdAt.seconds * 1000 +
+            Math.floor(post.createdAt.nanos / 1_000_000),
+        ),
+      };
+    });
   }
 
   public onModuleInit(): void {
