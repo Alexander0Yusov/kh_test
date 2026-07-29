@@ -45,4 +45,17 @@ export class CoreConfig {
         throw new Error(`Unsupported NODE_ENV value: ${this.nodeEnv}`);
     }
   }
+
+  public get rabbitMqGatewayFilesQueue(): string {
+    switch (this.nodeEnv) {
+      case 'development':
+        return 'gateway.files-events.dev';
+      case 'testing':
+        return 'gateway.files-events.test';
+      case 'production':
+        return 'gateway.files-events.prod';
+      default:
+        throw new Error(`Unsupported NODE_ENV value: ${this.nodeEnv}`);
+    }
+  }
 }

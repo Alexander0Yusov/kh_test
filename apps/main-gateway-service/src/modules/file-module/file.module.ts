@@ -15,6 +15,8 @@ import { CreateUploadHandler } from './application/commands/create-upload.comman
 import { FilesClient } from './application/contracts/files.client';
 import { FilesGrpcClient } from './infrastructure/files-grpc.client';
 import { FilesController } from './presentation/files.controller';
+import { FileUploadedConsumer } from './presentation/rabbitmq/file-uploaded.consumer';
+import { FilesWebSocketGateway } from './presentation/websocket/files-websocket.gateway';
 
 function createFilesClientOptions(config: GatewayConfig): ClientProvider {
   return {
@@ -48,9 +50,10 @@ function createFilesClientOptions(config: GatewayConfig): ClientProvider {
       },
     ]),
   ],
-  controllers: [FilesController],
+  controllers: [FilesController, FileUploadedConsumer],
   providers: [
     CreateUploadHandler,
+    FilesWebSocketGateway,
     {
       provide: FilesClient,
       useClass: FilesGrpcClient,
