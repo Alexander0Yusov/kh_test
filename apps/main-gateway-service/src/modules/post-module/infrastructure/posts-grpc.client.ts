@@ -106,6 +106,9 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
   ): Promise<CreatePostResult> {
     const grpcRequest: GrpcCreatePostRequest = {
       userId: request.userId,
+      userName: request.userName,
+      email: request.email,
+      homePage: request.homePage ?? undefined,
       message: request.message,
       attachmentFileId: request.attachmentFileId ?? undefined,
       parentId: request.parentId ?? undefined,
@@ -127,6 +130,11 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
     return {
       id: post.id,
       parentId: post.parentId ?? null,
+      rootId: post.rootId ?? null,
+      path: post.path,
+      userName: post.userName,
+      email: post.email,
+      homePage: post.homePage ?? null,
       message: post.message,
       attachmentFileId: post.attachmentFileId ?? null,
       createdAt: new Date(
@@ -157,6 +165,9 @@ function toPostTreeItem(post: PostDto): PostTreeItem {
   return {
     id: post.id,
     userId: post.userId,
+    userName: post.userName,
+    email: post.email,
+    homePage: post.homePage ?? null,
     parentId: post.parentId ?? null,
     rootId: post.rootId ?? null,
     path: post.path,

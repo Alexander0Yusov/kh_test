@@ -85,19 +85,6 @@ export class CoreConfig {
     }
   }
 
-  public get rabbitMqPostsUserEventsQueue(): string {
-    switch (this.nodeEnv) {
-      case 'development':
-        return 'posts.user-events.dev';
-      case 'testing':
-        return 'posts.user-events.test';
-      case 'production':
-        return 'posts.user-events.prod';
-      default:
-        throw new Error(`Unsupported NODE_ENV value: ${this.nodeEnv}`);
-    }
-  }
-
   public get rabbitMqFilesPostEventsQueue(): string {
     switch (this.nodeEnv) {
       case 'development':

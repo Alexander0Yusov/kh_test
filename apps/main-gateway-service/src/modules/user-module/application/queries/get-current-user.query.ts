@@ -13,8 +13,6 @@ export class GetCurrentUserQuery {
 export type GetCurrentUserResult = {
   id: string;
   email: string;
-  userName: string;
-  homePage: string;
   avatarUrl: string;
 };
 
@@ -53,8 +51,6 @@ export class GetCurrentUserHandler implements IQueryHandler<
     return {
       id: user.id,
       email: user.email,
-      userName: user.userName,
-      homePage: user.homePage,
       avatarUrl: file.publicUrl,
     };
   }

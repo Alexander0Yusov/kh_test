@@ -20,9 +20,7 @@ export class PrismaUserRepository extends UserRepository {
         data: {
           id: user.id,
           email: user.email,
-          userName: user.userName,
           passwordHash: user.passwordHash,
-          homePage: user.homePage,
           avatarFileId: user.avatarFileId,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
@@ -99,9 +97,7 @@ export class PrismaUserRepository extends UserRepository {
   private toEntity(user: {
     id: string;
     email: string;
-    userName: string;
     passwordHash: string;
-    homePage: string;
     avatarFileId: string;
     createdAt: Date;
     updatedAt: Date;
@@ -110,9 +106,7 @@ export class PrismaUserRepository extends UserRepository {
     return new UserEntity({
       id: user.id,
       email: user.email,
-      userName: user.userName,
       passwordHash: user.passwordHash,
-      homePage: user.homePage,
       avatarFileId: user.avatarFileId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

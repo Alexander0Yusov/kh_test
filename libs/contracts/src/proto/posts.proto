@@ -42,6 +42,9 @@ message CreatePostRequest {
   string message = 2;
   optional string attachment_file_id = 3;
   optional string parent_id = 4;
+  string user_name = 5;
+  string email = 6;
+  optional string home_page = 7;
 }
 
 message PostOptionalFields {
@@ -85,4 +88,7 @@ message PostDto {
   string message = 7;
   optional string attachment_file_id = 8;
   google.protobuf.Timestamp created_at = 9;
+  string user_name = 10;
+  string email = 11;
+  optional string home_page = 12;
 }

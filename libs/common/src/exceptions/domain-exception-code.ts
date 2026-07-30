@@ -1,6 +1,7 @@
 export enum DomainExceptionCode {
   BadRequest = 'BAD_REQUEST',
   ValidationFailed = 'VALIDATION_FAILED',
+  InvalidCaptcha = 'INVALID_CAPTCHA',
   Unauthorized = 'UNAUTHORIZED',
   Forbidden = 'FORBIDDEN',
   NotFound = 'NOT_FOUND',

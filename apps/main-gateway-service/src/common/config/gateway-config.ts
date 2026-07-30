@@ -59,6 +59,10 @@ export class GatewayConfig {
   })
   jwtRefreshTtlSeconds: number;
 
+  @IsInt({ message: 'Env variable CAPTCHA_TTL_SECONDS must be an integer' })
+  @IsPositive({ message: 'Env variable CAPTCHA_TTL_SECONDS must be positive' })
+  captchaTtlSeconds: number;
+
   @IsString({ message: 'Env variable FILE_SERVICE_GRPC_URL must be a string' })
   @IsNotEmpty({ message: 'Set Env variable FILE_SERVICE_GRPC_URL' })
   fileServiceGrpcUrl: string;
@@ -83,6 +87,9 @@ export class GatewayConfig {
     );
     this.jwtRefreshTtlSeconds = Number(
       this.configService.get('JWT_REFRESH_TTL_SECONDS'),
+    );
+    this.captchaTtlSeconds = Number(
+      this.configService.get('CAPTCHA_TTL_SECONDS'),
     );
     this.fileServiceGrpcUrl = this.configService.get('FILE_SERVICE_GRPC_URL');
     this.postServiceGrpcUrl = this.configService.get('POST_SERVICE_GRPC_URL');

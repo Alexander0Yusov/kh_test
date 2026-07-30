@@ -15,25 +15,16 @@ model Post {
   rootId           String?   @db.Uuid
   childCounter     Int       @default(0)
   path             String
+  userName         String
+  email            String
+  homePage         String?
   message          String
   attachmentFileId String?   @unique @db.Uuid
   createdAt        DateTime
   updatedAt        DateTime
   deletedAt        DateTime?
-  user             PostUser  @relation(fields: [userId], references: [id])
 
   @@index([userId])
-  @@index([parentId])
   @@index([rootId])
   @@unique([rootId, path])
-}
-
-model PostUser {
-  id       String @id @db.Uuid
-  email    String
-  userName String
-  posts    Post[]
-
-  @@index([email, id])
-  @@index([userName, id])
 }

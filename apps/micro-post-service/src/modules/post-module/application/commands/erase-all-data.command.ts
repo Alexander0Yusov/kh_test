@@ -11,6 +11,6 @@ export class EraseAllDataHandler implements ICommandHandler<
   public constructor(private readonly postRepository: PostRepository) {}
 
   public async execute(): Promise<void> {
-    await this.postRepository.deleteAllPostsAndUsers();
+    await this.postRepository.deleteAll();
   }
 }

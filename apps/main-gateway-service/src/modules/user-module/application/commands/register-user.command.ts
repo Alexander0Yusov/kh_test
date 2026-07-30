@@ -14,18 +14,13 @@ import { UserEventsPublisher } from '../contracts/user-events.publisher';
 export type RegisterUserResult = {
   id: string;
   email: string;
-  userName: string;
-  homePage: string;
-  avatarFileId: string;
   createdAt: Date;
 };
 
 export class RegisterUserCommand extends Command<RegisterUserResult> {
   public constructor(
     public readonly email: string,
-    public readonly userName: string,
     public readonly password: string,
-    public readonly homePage: string,
     public readonly avatarFileId: string,
   ) {
     super();
@@ -55,26 +50,19 @@ export class RegisterUserHandler implements ICommandHandler<
     const user = new UserEntity({
       id,
       email,
-      userName: command.userName.trim(),
       passwordHash,
-      homePage: command.homePage.trim(),
       avatarFileId: command.avatarFileId,
     });
 
     await this.userRepository.save(user);
     await this.userEventsPublisher.publishCreated({
       userId: user.id,
-      email: user.email,
-      userName: user.userName,
       avatarFileId: user.avatarFileId,
     });
 
     return {
       id: user.id,
       email: user.email,
-      userName: user.userName,
-      homePage: user.homePage,
-      avatarFileId: user.avatarFileId,
       createdAt: user.createdAt,
     };
   }

@@ -6,6 +6,12 @@ import {
 } from '../../../../../../../libs/common/src';
 import { FilesClient } from '../../../file-module/application/contracts/files.client';
 import { PostsClient } from '../contracts/posts.client';
+import { UserRepository } from '../../../user-module/application/contracts/user.repository';
+import { CaptchaService } from '../queries/get-captcha.query';
+import {
+  buildPostResponse,
+  FULL_POST_FIELDS,
+} from '../queries/get-posts.query';
 
 const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: ['a', 'strong', 'i', 'code'],
@@ -19,6 +25,11 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
 export class CreatePostCommand {
   public constructor(
     public readonly userId: string,
+    public readonly userName: string,
+    public readonly email: string,
+    public readonly homePage: string | null,
+    public readonly captchaId: string,
+    public readonly captchaValue: string,
     public readonly message: string,
     public readonly attachmentFileId: string | null,
     public readonly parentId: string | null,
@@ -28,8 +39,14 @@ export class CreatePostCommand {
 export type CreatePostResult = {
   id: string;
   parentId: string | null;
+  rootId: string | null;
+  path: string;
   message: string;
   publishDate: Date;
+  userName: string;
+  email: string;
+  homePage: string | null;
+  avatarUrl: string | null;
   attachmentUrl: string | null;
 };
 
@@ -41,6 +58,8 @@ export class CreatePostHandler implements ICommandHandler<
   public constructor(
     private readonly filesClient: FilesClient,
     private readonly postsClient: PostsClient,
+    private readonly userRepository: UserRepository,
+    private readonly captchaService: CaptchaService,
   ) {}
 
   public async execute(command: CreatePostCommand): Promise<CreatePostResult> {
@@ -59,41 +78,47 @@ export class CreatePostHandler implements ICommandHandler<
       });
     }
 
+    this.captchaService.verifyAndConsume(
+      command.captchaId,
+      command.captchaValue,
+    );
+
     if (command.attachmentFileId !== null) {
       await this.ensureAttachmentUploaded(command.attachmentFileId);
     }
 
     const post = await this.postsClient.createPost({
       userId: command.userId,
+      userName: command.userName,
+      email: command.email.trim().toLowerCase(),
+      homePage:
+        command.homePage === null || command.homePage.trim().length === 0
+          ? null
+          : command.homePage.trim(),
       message,
       attachmentFileId: command.attachmentFileId,
       parentId: command.parentId,
     });
-    let attachmentUrl: string | null = null;
-
-    if (command.attachmentFileId !== null) {
-      const files = await this.filesClient.getFiles([command.attachmentFileId]);
-      const file = files.find(
-        ({ fileId }) => fileId === command.attachmentFileId,
-      );
-
-      if (file === undefined) {
-        throw new DomainException({
-          code: DomainExceptionCode.ServiceUnavailable,
-          message: 'Attachment URL is temporarily unavailable.',
-        });
-      }
-
-      attachmentUrl = file.publicUrl;
+    const user = await this.userRepository.findById(command.userId);
+    if (user === null) {
+      throw new DomainException({
+        code: DomainExceptionCode.InvalidBusinessState,
+        message: 'Post author data is unavailable.',
+      });
     }
+    const fileIds = [
+      user.avatarFileId,
+      ...(post.attachmentFileId === null ? [] : [post.attachmentFileId]),
+    ];
+    const files = await this.filesClient.getFiles([...new Set(fileIds)]);
+    const urls = new Map(files.map((file) => [file.fileId, file.publicUrl]));
 
-    return {
-      id: post.id,
-      parentId: post.parentId,
-      message: post.message,
-      publishDate: post.createdAt,
-      attachmentUrl,
-    };
+    return buildPostResponse(
+      { ...post, userId: command.userId },
+      user,
+      urls,
+      new Set(FULL_POST_FIELDS),
+    ) as CreatePostResult;
   }
 
   private async ensureAttachmentUploaded(

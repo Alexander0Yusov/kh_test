@@ -1,17 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
-import {
-  DomainException,
-  DomainExceptionCode,
-} from '../../../../../../../libs/common/src';
 import { PostEntity } from '../../domain';
 import { PostEventsPublisher } from '../contracts/post-events.publisher';
-import { PostUserRepository } from '../contracts/post-user.repository';
 import { PostRepository } from '../contracts/post.repository';
 
 export class CreatePostCommand {
   public constructor(
     public readonly userId: string,
+    public readonly userName: string,
+    public readonly email: string,
+    public readonly homePage: string | null,
     public readonly message: string,
     public readonly attachmentFileId: string | null,
     public readonly parentId: string | null,
@@ -21,6 +19,9 @@ export class CreatePostCommand {
 export type CreatePostResult = {
   id: string;
   userId: string;
+  userName: string;
+  email: string;
+  homePage: string | null;
   parentId: string | null;
   rootId: string | null;
   path: string;
@@ -36,33 +37,20 @@ export class CreatePostHandler implements ICommandHandler<
   CreatePostResult
 > {
   public constructor(
-    private readonly postUserRepository: PostUserRepository,
     private readonly postRepository: PostRepository,
     private readonly postEventsPublisher: PostEventsPublisher,
   ) {}
 
   public async execute(command: CreatePostCommand): Promise<CreatePostResult> {
-    const postUser = await this.postUserRepository.findById(command.userId);
-
-    if (postUser === null) {
-      throw new DomainException({
-        code: DomainExceptionCode.InvalidBusinessState,
-        message: 'The Posts user projection is not ready.',
-        extensions: [
-          {
-            field: 'userId',
-            message: 'The Posts user projection is not ready.',
-          },
-        ],
-      });
-    }
-
     const id = randomUUID();
     const post =
       command.parentId === null
         ? new PostEntity({
             id,
             userId: command.userId,
+            userName: command.userName,
+            email: command.email,
+            homePage: command.homePage,
             message: command.message,
             parentId: null,
             rootId: null,
@@ -73,6 +61,9 @@ export class CreatePostHandler implements ICommandHandler<
         : await this.postRepository.createReply({
             id,
             userId: command.userId,
+            userName: command.userName,
+            email: command.email,
+            homePage: command.homePage,
             parentId: command.parentId,
             message: command.message,
             attachmentFileId: command.attachmentFileId,
@@ -87,14 +78,17 @@ export class CreatePostHandler implements ICommandHandler<
       parentId: post.parentId,
       rootId: post.rootId,
       publishDate: post.createdAt.toISOString(),
-      userName: postUser.userName,
-      email: postUser.email,
+      userName: post.userName,
+      email: post.email,
       attachmentFileId: post.attachmentFileId,
     });
 
     return {
       id: post.id,
       userId: post.userId,
+      userName: post.userName,
+      email: post.email,
+      homePage: post.homePage,
       parentId: post.parentId,
       rootId: post.rootId,
       path: post.path,

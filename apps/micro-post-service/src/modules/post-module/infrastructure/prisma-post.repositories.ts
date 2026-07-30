@@ -6,10 +6,6 @@ import {
 } from '../../../../../../libs/common/src';
 import { PrismaService } from '../../../common/prisma';
 import {
-  type PostUserData,
-  PostUserRepository,
-} from '../application/contracts/post-user.repository';
-import {
   type CreateReplyInput,
   PostRepository,
 } from '../application/contracts/post.repository';
@@ -20,35 +16,6 @@ import {
   type PostTreeRow,
 } from '../application/contracts/post-query.repository';
 import { PostEntity } from '../domain';
-
-@Injectable()
-export class PrismaPostUserRepository extends PostUserRepository {
-  public constructor(private readonly prisma: PrismaService) {
-    super();
-  }
-
-  public async upsert(user: PostUserData): Promise<void> {
-    await this.prisma.postUser.upsert({
-      where: { id: user.id },
-      create: user,
-      update: {
-        email: user.email,
-        userName: user.userName,
-      },
-    });
-  }
-
-  public async findById(id: string): Promise<PostUserData | null> {
-    return this.prisma.postUser.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        userName: true,
-      },
-    });
-  }
-}
 
 @Injectable()
 export class PrismaPostRepository extends PostRepository {
@@ -99,6 +66,9 @@ export class PrismaPostRepository extends PostRepository {
         const reply = new PostEntity({
           id: input.id,
           userId: input.userId,
+          userName: input.userName,
+          email: input.email,
+          homePage: input.homePage,
           parentId: parent.id,
           rootId: parent.rootId ?? parent.id,
           path: parent.buildChildPath(incrementedParent.childCounter),
@@ -118,6 +88,9 @@ export class PrismaPostRepository extends PostRepository {
   private toEntity(post: {
     id: string;
     userId: string;
+    userName: string;
+    email: string;
+    homePage: string | null;
     parentId: string | null;
     rootId: string | null;
     childCounter: number;
@@ -135,6 +108,9 @@ export class PrismaPostRepository extends PostRepository {
     return {
       id: post.id,
       userId: post.userId,
+      userName: post.userName,
+      email: post.email,
+      homePage: post.homePage,
       parentId: post.parentId,
       rootId: post.rootId,
       childCounter: post.childCounter,
@@ -175,11 +151,8 @@ export class PrismaPostRepository extends PostRepository {
           (typeof target === 'string' && target.includes('attachmentFileId'));
   }
 
-  public async deleteAllPostsAndUsers(): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.post.deleteMany(),
-      this.prisma.postUser.deleteMany(),
-    ]);
+  public async deleteAll(): Promise<void> {
+    await this.prisma.post.deleteMany();
   }
 }
 
@@ -196,6 +169,7 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
       .findMany({
         where: {
           parentId: null,
+          deletedAt: null,
           ...this.positionWhere(query),
         },
         orderBy: this.orderBy(query),
@@ -203,20 +177,16 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
         select: {
           id: true,
           createdAt: true,
-          user: {
-            select: {
-              userName: true,
-              email: true,
-            },
-          },
+          userName: true,
+          email: true,
         },
       })
       .then((rows) =>
         rows.map((row) => ({
           id: row.id,
           createdAt: row.createdAt,
-          userName: row.user.userName,
-          email: row.user.email,
+          userName: row.userName,
+          email: row.email,
         })),
       );
   }
@@ -242,6 +212,9 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
         rootId: true,
         path: true,
         message: true,
+        userName: true,
+        email: true,
+        homePage: true,
         attachmentFileId: true,
         createdAt: true,
       },
@@ -258,6 +231,9 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
         rootId: true,
         path: true,
         message: true,
+        userName: true,
+        email: true,
+        homePage: true,
         attachmentFileId: true,
         createdAt: true,
       },
@@ -294,9 +270,9 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
       case 'userName':
         return {
           OR: [
-            { user: { userName: comparison } },
+            { userName: comparison },
             {
-              user: { userName: query.position.value },
+              userName: query.position.value,
               id: idComparison,
             },
           ],
@@ -304,9 +280,9 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
       case 'email':
         return {
           OR: [
-            { user: { email: comparison } },
+            { email: comparison },
             {
-              user: { email: query.position.value },
+              email: query.position.value,
               id: idComparison,
             },
           ],
@@ -324,15 +300,9 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
           { id: query.sortDirection },
         ];
       case 'userName':
-        return [
-          { user: { userName: query.sortDirection } },
-          { id: query.sortDirection },
-        ];
+        return [{ userName: query.sortDirection }, { id: query.sortDirection }];
       case 'email':
-        return [
-          { user: { email: query.sortDirection } },
-          { id: query.sortDirection },
-        ];
+        return [{ email: query.sortDirection }, { id: query.sortDirection }];
     }
   }
 }

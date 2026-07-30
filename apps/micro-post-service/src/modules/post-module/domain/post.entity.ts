@@ -7,6 +7,9 @@ import {
 export type PostEntityProps = {
   id: string;
   userId: string;
+  userName: string;
+  email: string;
+  homePage?: string | null;
   message: string;
   parentId?: string | null;
   rootId?: string | null;
@@ -20,6 +23,9 @@ export type PostEntityProps = {
 
 export class PostEntity extends BaseDomainEntity {
   private readonly _userId: string;
+  private readonly _userName: string;
+  private readonly _email: string;
+  private readonly _homePage: string | null;
 
   private readonly _parentId: string | null;
 
@@ -39,6 +45,18 @@ export class PostEntity extends BaseDomainEntity {
     const parentId = props.parentId ?? null;
     const rootId = props.rootId ?? null;
     const path = props.path ?? '1';
+    const email = props.email.trim().toLowerCase();
+    const homePage = normalizeHomePage(props.homePage);
+
+    if (!/^[A-Za-z0-9]+$/.test(props.userName)) {
+      throw validationException('userName');
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw validationException('email');
+    }
+    if (homePage !== null && !isHttpUrl(homePage)) {
+      throw validationException('homePage');
+    }
 
     if (parentId === null && rootId !== null) {
       throw new DomainException({
@@ -93,6 +111,9 @@ export class PostEntity extends BaseDomainEntity {
     }
 
     this._userId = props.userId;
+    this._userName = props.userName;
+    this._email = email;
+    this._homePage = homePage;
     this._parentId = parentId;
     this._rootId = rootId;
     this._childCounter = props.childCounter ?? 0;
@@ -103,6 +124,18 @@ export class PostEntity extends BaseDomainEntity {
 
   public get userId(): string {
     return this._userId;
+  }
+
+  public get userName(): string {
+    return this._userName;
+  }
+
+  public get email(): string {
+    return this._email;
+  }
+
+  public get homePage(): string | null {
+    return this._homePage;
   }
 
   public get parentId(): string | null {
@@ -172,4 +205,26 @@ export class PostEntity extends BaseDomainEntity {
     this._attachmentFileId = null;
     this.touch();
   }
+}
+
+function normalizeHomePage(value?: string | null): string | null {
+  const normalized = value?.trim() ?? '';
+  return normalized.length === 0 ? null : normalized;
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function validationException(field: string): DomainException {
+  return new DomainException({
+    code: DomainExceptionCode.ValidationFailed,
+    message: 'Validation failed.',
+    extensions: [{ field, message: 'Validation failed.' }],
+  });
 }

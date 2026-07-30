@@ -1,5 +1,8 @@
 export type CreatePostRequest = {
   userId: string;
+  userName: string;
+  email: string;
+  homePage: string | null;
   message: string;
   attachmentFileId: string | null;
   parentId: string | null;
@@ -8,7 +11,12 @@ export type CreatePostRequest = {
 export type CreatePostResult = {
   id: string;
   parentId: string | null;
+  rootId: string | null;
+  path: string;
   message: string;
+  userName: string;
+  email: string;
+  homePage: string | null;
   attachmentFileId: string | null;
   createdAt: Date;
 };
@@ -40,6 +48,9 @@ export type PostTreeItem = {
   rootId: string | null;
   path: string;
   message: string;
+  userName: string;
+  email: string;
+  homePage: string | null;
   attachmentFileId: string | null;
   createdAt: Date;
 };

@@ -11,9 +11,7 @@ datasource db {
 model User {
   id           String    @id @db.Uuid
   email        String    @unique
-  userName     String
   passwordHash String
-  homePage     String
   avatarFileId String    @unique @db.Uuid
   createdAt    DateTime
   updatedAt    DateTime

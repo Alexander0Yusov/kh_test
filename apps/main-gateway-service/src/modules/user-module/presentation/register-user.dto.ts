@@ -21,15 +21,6 @@ export class RegisterUserDto {
   public email!: string;
 
   @ApiProperty({
-    example: 'alex',
-    description: 'Public user name.',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  public userName!: string;
-
-  @ApiProperty({
     example: 'secret-password',
     format: 'password',
     writeOnly: true,
@@ -40,15 +31,6 @@ export class RegisterUserDto {
   @MinLength(8)
   @MaxLength(128)
   public password!: string;
-
-  @ApiProperty({
-    example: 'https://example.com/alex',
-    description: 'User-provided home page value.',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(2048)
-  public homePage!: string;
 
   @ApiProperty({
     example: '00000000-0000-4000-8000-000000000001',

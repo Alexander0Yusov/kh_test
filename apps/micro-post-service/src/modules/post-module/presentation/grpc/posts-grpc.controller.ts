@@ -57,6 +57,9 @@ export class PostsGrpcController {
     >(
       new CreatePostCommand(
         request.userId,
+        request.userName,
+        request.email,
+        request.homePage ?? null,
         request.message,
         request.attachmentFileId ?? null,
         request.parentId ?? null,
@@ -67,6 +70,9 @@ export class PostsGrpcController {
     return {
       id: result.id,
       userId: result.userId,
+      userName: result.userName,
+      email: result.email,
+      homePage: result.homePage ?? undefined,
       parentId: result.parentId ?? undefined,
       rootId: result.rootId ?? undefined,
       path: result.path,
@@ -143,6 +149,9 @@ function toPostDto(post: GetPostResult): PostDto {
   return {
     id: post.id,
     userId: post.userId,
+    userName: post.userName,
+    email: post.email,
+    homePage: post.homePage ?? undefined,
     parentId: post.parentId ?? undefined,
     rootId: post.rootId ?? undefined,
     path: post.path,

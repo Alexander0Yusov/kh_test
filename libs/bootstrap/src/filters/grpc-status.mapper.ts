@@ -4,6 +4,7 @@ import { DomainExceptionCode } from '../../../common/src/exceptions';
 const GRPC_STATUS_BY_CODE: Record<DomainExceptionCode, status> = {
   [DomainExceptionCode.BadRequest]: status.INVALID_ARGUMENT,
   [DomainExceptionCode.ValidationFailed]: status.INVALID_ARGUMENT,
+  [DomainExceptionCode.InvalidCaptcha]: status.INVALID_ARGUMENT,
   [DomainExceptionCode.Unauthorized]: status.UNAUTHENTICATED,
   [DomainExceptionCode.Forbidden]: status.PERMISSION_DENIED,
   [DomainExceptionCode.NotFound]: status.NOT_FOUND,

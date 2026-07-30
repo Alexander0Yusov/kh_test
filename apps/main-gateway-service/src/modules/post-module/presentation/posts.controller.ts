@@ -31,7 +31,15 @@ import {
   CreatePostCommand,
   type CreatePostResult,
 } from '../application/commands/create-post.command';
-import { CreatePostDto, CreatePostResponseDto } from './create-post.dto';
+import {
+  CaptchaResponseDto,
+  CreatePostDto,
+  CreatePostResponseDto,
+} from './create-post.dto';
+import {
+  GetCaptchaQuery,
+  type CaptchaChallenge,
+} from '../application/queries/get-captcha.query';
 import { GetPostsQueryDto, GetPostsResponseDto } from './get-posts.dto';
 import {
   GetPostsQuery,
@@ -71,6 +79,13 @@ export class PostsController {
         dto.fields,
       ),
     );
+  }
+
+  @Get('captcha')
+  @ApiOperation({ operationId: 'getPostCaptcha', summary: 'Create CAPTCHA' })
+  @ApiOkResponse({ type: CaptchaResponseDto })
+  public getCaptcha(): Promise<CaptchaChallenge> {
+    return this.queryBus.execute(new GetCaptchaQuery());
   }
 
   @Get(':postId')
@@ -126,6 +141,11 @@ export class PostsController {
     return this.commandBus.execute(
       new CreatePostCommand(
         user.userId,
+        dto.userName,
+        dto.email,
+        dto.homePage ?? null,
+        dto.captchaId ?? '',
+        dto.captchaValue ?? '',
         dto.message,
         dto.attachmentFileId ?? null,
         dto.parentId ?? null,

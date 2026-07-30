@@ -80,13 +80,7 @@ export class UserController {
     @Body() dto: RegisterUserDto,
   ): Promise<RegisterUserResponseDto> {
     return this.commandBus.execute(
-      new RegisterUserCommand(
-        dto.email,
-        dto.userName,
-        dto.password,
-        dto.homePage,
-        dto.avatarFileId,
-      ),
+      new RegisterUserCommand(dto.email, dto.password, dto.avatarFileId),
     );
   }
 }

@@ -43,6 +43,9 @@ export interface CreatePostRequest {
   message: string;
   attachmentFileId?: string | undefined;
   parentId?: string | undefined;
+  userName: string;
+  email: string;
+  homePage?: string | undefined;
 }
 
 export interface PostOptionalFields {
@@ -86,6 +89,9 @@ export interface PostDto {
   message: string;
   attachmentFileId?: string | undefined;
   createdAt: Timestamp | undefined;
+  userName: string;
+  email: string;
+  homePage?: string | undefined;
 }
 
 export const POSTS_V1_PACKAGE_NAME = "posts.v1";

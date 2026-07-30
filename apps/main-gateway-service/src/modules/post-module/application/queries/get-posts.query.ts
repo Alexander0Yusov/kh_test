@@ -34,7 +34,7 @@ export type GetPostsItem = {
   publishDate?: Date;
   userName?: string;
   email?: string;
-  homePage?: string;
+  homePage?: string | null;
   avatarUrl?: string | null;
   attachmentUrl?: string | null;
 };
@@ -82,11 +82,7 @@ export class GetPostsHandler implements IQueryHandler<
 
     const posts = await this.postsClient.getPostsByRootIds(rootPage.rootIds);
     const fields = new Set(rootPage.resolvedFields);
-    const needsUsers =
-      fields.has('avatar') ||
-      fields.has('userName') ||
-      fields.has('email') ||
-      fields.has('homePage');
+    const needsUsers = fields.has('avatar');
     const userIds = [...new Set(posts.map(({ userId }) => userId))];
     const users = needsUsers
       ? await this.userRepository.findManyByIds(userIds)
@@ -154,9 +150,9 @@ export function buildPostResponse(
     path: post.path,
     message: post.message,
     ...(fields.has('publishDate') ? { publishDate: post.createdAt } : {}),
-    ...(fields.has('userName') ? { userName: user?.userName } : {}),
-    ...(fields.has('email') ? { email: user?.email } : {}),
-    ...(fields.has('homePage') ? { homePage: user?.homePage } : {}),
+    ...(fields.has('userName') ? { userName: post.userName } : {}),
+    ...(fields.has('email') ? { email: post.email } : {}),
+    ...(fields.has('homePage') ? { homePage: post.homePage } : {}),
     ...(fields.has('avatar')
       ? {
           avatarUrl:

@@ -27,6 +27,9 @@ export type PostTreeRow = {
   rootId: string | null;
   path: string;
   message: string;
+  userName: string;
+  email: string;
+  homePage: string | null;
   attachmentFileId: string | null;
   createdAt: Date;
 };

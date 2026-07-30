@@ -21,6 +21,11 @@ import { UserModule } from '../user-module';
 import { PostsController } from './presentation/posts.controller';
 import { PostCreatedConsumer } from './presentation/rabbitmq/post-created.consumer';
 import { PostsWebSocketGateway } from './presentation/websocket/posts-websocket.gateway';
+import {
+  CaptchaService,
+  GetCaptchaHandler,
+} from './application/queries/get-captcha.query';
+import { InMemoryCaptchaService } from './infrastructure/in-memory-captcha.service';
 
 function createPostsClientOptions(config: GatewayConfig): ClientProvider {
   return {
@@ -58,7 +63,12 @@ function createPostsClientOptions(config: GatewayConfig): ClientProvider {
     CreatePostHandler,
     GetPostsHandler,
     GetPostHandler,
+    GetCaptchaHandler,
     PostsWebSocketGateway,
+    {
+      provide: CaptchaService,
+      useClass: InMemoryCaptchaService,
+    },
     {
       provide: PostsClient,
       useClass: PostsGrpcClient,

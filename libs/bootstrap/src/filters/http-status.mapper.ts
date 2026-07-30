@@ -4,6 +4,7 @@ import { DomainExceptionCode } from '../../../common/src/exceptions';
 const HTTP_STATUS_BY_CODE: Record<DomainExceptionCode, HttpStatus> = {
   [DomainExceptionCode.BadRequest]: HttpStatus.BAD_REQUEST,
   [DomainExceptionCode.ValidationFailed]: HttpStatus.BAD_REQUEST,
+  [DomainExceptionCode.InvalidCaptcha]: HttpStatus.BAD_REQUEST,
   [DomainExceptionCode.Unauthorized]: HttpStatus.UNAUTHORIZED,
   [DomainExceptionCode.Forbidden]: HttpStatus.FORBIDDEN,
   [DomainExceptionCode.NotFound]: HttpStatus.NOT_FOUND,

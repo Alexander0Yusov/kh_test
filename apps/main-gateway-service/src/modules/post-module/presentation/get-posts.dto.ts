@@ -88,8 +88,12 @@ export class PostResponseDto {
   @ApiPropertyOptional({ format: 'email', example: 'alex@example.com' })
   public email?: string;
 
-  @ApiPropertyOptional({ format: 'uri', example: 'https://example.com' })
-  public homePage?: string;
+  @ApiPropertyOptional({
+    format: 'uri',
+    example: 'https://example.com',
+    nullable: true,
+  })
+  public homePage?: string | null;
 
   @ApiPropertyOptional({ format: 'uri', nullable: true })
   public avatarUrl?: string | null;
