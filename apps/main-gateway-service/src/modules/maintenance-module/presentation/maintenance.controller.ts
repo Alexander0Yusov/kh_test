@@ -18,9 +18,9 @@ export class MaintenanceController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     operationId: 'eraseAllData',
-    summary: 'Erase all demonstration data',
+    summary: 'Erase all project data',
     description:
-      'Irreversibly deletes all demonstration S3 object, File, Post, PostUser, Session and User data.',
+      '⚠️ WARNING: This endpoint exists exclusively for convenient reset and demonstration of the test project. It irreversibly deletes all application database records, uploaded storage objects, and temporary project resources. This approach must never be exposed or implemented in a production business system.',
   })
   @ApiNoContentResponse({ description: 'All demonstration data was erased.' })
   @ApiServiceUnavailableResponse({ type: ErrorResponseDto })

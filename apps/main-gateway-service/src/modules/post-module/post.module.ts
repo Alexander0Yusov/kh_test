@@ -25,7 +25,7 @@ import {
   CaptchaService,
   GetCaptchaHandler,
 } from './application/queries/get-captcha.query';
-import { InMemoryCaptchaService } from './infrastructure/in-memory-captcha.service';
+import { RedisCaptchaService } from './infrastructure/redis-captcha.service';
 import { PostsResolver } from './presentation/graphql/posts.resolver';
 
 function createPostsClientOptions(config: GatewayConfig): ClientProvider {
@@ -69,13 +69,13 @@ function createPostsClientOptions(config: GatewayConfig): ClientProvider {
     PostsResolver,
     {
       provide: CaptchaService,
-      useClass: InMemoryCaptchaService,
+      useClass: RedisCaptchaService,
     },
     {
       provide: PostsClient,
       useClass: PostsGrpcClient,
     },
   ],
-  exports: [PostsClient],
+  exports: [PostsClient, CaptchaService],
 })
 export class PostModule {}

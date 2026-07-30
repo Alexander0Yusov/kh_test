@@ -10,7 +10,8 @@ export abstract class CaptchaService {
   public abstract verifyAndConsume(
     captchaId: string,
     captchaValue: string,
-  ): void;
+  ): Promise<void>;
+  public abstract clearAll(): Promise<void>;
 }
 
 export class GetCaptchaQuery {}

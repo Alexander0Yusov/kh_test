@@ -78,7 +78,7 @@ export class CreatePostHandler implements ICommandHandler<
       });
     }
 
-    this.captchaService.verifyAndConsume(
+    await this.captchaService.verifyAndConsume(
       command.captchaId,
       command.captchaValue,
     );

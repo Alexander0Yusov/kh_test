@@ -63,6 +63,20 @@ export class GatewayConfig {
   @IsPositive({ message: 'Env variable CAPTCHA_TTL_SECONDS must be positive' })
   captchaTtlSeconds: number;
 
+  @IsString({ message: 'Env variable REDIS_URL must be a string' })
+  @IsUrl(
+    {
+      protocols: ['redis', 'rediss'],
+      require_protocol: true,
+      require_tld: false,
+    },
+    { message: 'Env variable REDIS_URL must be a valid Redis URL' },
+  )
+  @IsNotEmpty({
+    message: 'Set Env variable REDIS_URL, example: redis://localhost:6379',
+  })
+  redisUrl: string;
+
   @IsString({ message: 'Env variable FILE_SERVICE_GRPC_URL must be a string' })
   @IsNotEmpty({ message: 'Set Env variable FILE_SERVICE_GRPC_URL' })
   fileServiceGrpcUrl: string;
@@ -91,6 +105,7 @@ export class GatewayConfig {
     this.captchaTtlSeconds = Number(
       this.configService.get('CAPTCHA_TTL_SECONDS'),
     );
+    this.redisUrl = this.configService.get('REDIS_URL');
     this.fileServiceGrpcUrl = this.configService.get('FILE_SERVICE_GRPC_URL');
     this.postServiceGrpcUrl = this.configService.get('POST_SERVICE_GRPC_URL');
     this.swaggerEnabled = configValidationUtility.convertToBoolean(
@@ -98,5 +113,13 @@ export class GatewayConfig {
     )!;
 
     configValidationUtility.validateConfig(this);
+    this.validateRedisProtocol(this.configService.get('NODE_ENV'));
+  }
+
+  private validateRedisProtocol(nodeEnv: string): void {
+    const protocol = new URL(this.redisUrl).protocol;
+    if (nodeEnv === 'production' && protocol !== 'rediss:') {
+      throw new Error('Production REDIS_URL must use the rediss protocol.');
+    }
   }
 }

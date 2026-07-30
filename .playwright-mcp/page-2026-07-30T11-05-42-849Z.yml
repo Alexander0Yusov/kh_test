@@ -1,0 +1,160 @@
+- generic [ref=e3]:
+  - button [ref=e44] [cursor=pointer]
+  - generic [ref=e48]:
+    - generic [ref=e52]:
+      - heading "DzenCode API 1.0.0 OAS 3.0" [level=1] [ref=e54]:
+        - text: DzenCode API
+        - generic [ref=e55]:
+          - generic [ref=e56]: 1.0.0
+          - generic [ref=e58]: OAS 3.0
+      - paragraph [ref=e62]: Public HTTP API exposed by API Gateway
+    - button "Authorize" [ref=e66] [cursor=pointer]
+    - generic [ref=e72]:
+      - generic [ref=e74]:
+        - heading [level=3] [ref=e75] [cursor=pointer]:
+          - link "Users" [ref=e76]:
+            - /url: "#/Users"
+          - button "Collapse operation" [expanded] [ref=e77]
+        - generic [ref=e81]:
+          - generic [ref=e84] [cursor=pointer]:
+            - button "GET /api/users/me Get the authenticated user" [ref=e85]:
+              - generic [ref=e86]: GET
+              - generic [ref=e87]:
+                - link [ref=e89]:
+                  - /url: "#/Users/getCurrentUser"
+                - generic [ref=e91]: Get the authenticated user
+            - generic "Copy to clipboard"
+            - button "authorization button unlocked" [ref=e94]
+            - button "get /api/users/me" [ref=e97]
+          - generic [ref=e102] [cursor=pointer]:
+            - button "POST /api/users/register Register a user" [ref=e103]:
+              - generic [ref=e104]: POST
+              - generic [ref=e105]:
+                - link [ref=e107]:
+                  - /url: "#/Users/registerUser"
+                - generic [ref=e109]: Register a user
+            - generic "Copy to clipboard"
+            - button "post /api/users/register" [ref=e112]
+      - generic [ref=e116]:
+        - heading [level=3] [ref=e117] [cursor=pointer]:
+          - link "Auth" [ref=e118]:
+            - /url: "#/Auth"
+          - button "Collapse operation" [expanded] [ref=e119]
+        - generic [ref=e123]:
+          - generic [ref=e126] [cursor=pointer]:
+            - button "POST /api/auth/login Log in" [ref=e127]:
+              - generic [ref=e128]: POST
+              - generic [ref=e129]:
+                - link [ref=e131]:
+                  - /url: "#/Auth/loginUser"
+                - generic [ref=e133]: Log in
+            - generic "Copy to clipboard"
+            - button "post /api/auth/login" [ref=e136]
+          - generic [ref=e141] [cursor=pointer]:
+            - button "POST /api/auth/refresh Refresh access token" [ref=e142]:
+              - generic [ref=e143]: POST
+              - generic [ref=e144]:
+                - link [ref=e146]:
+                  - /url: "#/Auth/refreshToken"
+                - generic [ref=e148]: Refresh access token
+            - generic "Copy to clipboard"
+            - button "authorization button unlocked" [ref=e151]
+            - button "post /api/auth/refresh" [ref=e154]
+          - generic [ref=e159] [cursor=pointer]:
+            - button "POST /api/auth/logout Log out" [ref=e160]:
+              - generic [ref=e161]: POST
+              - generic [ref=e162]:
+                - link [ref=e164]:
+                  - /url: "#/Auth/logoutUser"
+                - generic [ref=e166]: Log out
+            - generic "Copy to clipboard"
+            - button "authorization button unlocked" [ref=e169]
+            - button "post /api/auth/logout" [ref=e172]
+      - generic [ref=e176]:
+        - heading [level=3] [ref=e177] [cursor=pointer]:
+          - link "Files" [ref=e178]:
+            - /url: "#/Files"
+          - button "Collapse operation" [expanded] [ref=e179]
+        - generic [ref=e186] [cursor=pointer]:
+          - button "POST /api/files/upload-request Create a file upload request" [ref=e187]:
+            - generic [ref=e188]: POST
+            - generic [ref=e189]:
+              - link [ref=e191]:
+                - /url: "#/Files/createFileUpload"
+              - generic [ref=e193]: Create a file upload request
+          - generic "Copy to clipboard"
+          - button "post /api/files/upload-request" [ref=e196]
+      - generic [ref=e200]:
+        - heading [level=3] [ref=e201] [cursor=pointer]:
+          - link "Posts" [ref=e202]:
+            - /url: "#/Posts"
+          - button "Collapse operation" [expanded] [ref=e203]
+        - generic [ref=e207]:
+          - generic [ref=e210] [cursor=pointer]:
+            - button "GET /api/posts Get a flat page of post trees" [ref=e211]:
+              - generic [ref=e212]: GET
+              - generic [ref=e213]:
+                - link [ref=e215]:
+                  - /url: "#/Posts/getPosts"
+                - generic [ref=e217]: Get a flat page of post trees
+            - generic "Copy to clipboard"
+            - button "get /api/posts" [ref=e220]
+          - generic [ref=e225] [cursor=pointer]:
+            - button "POST /api/posts Create a root post or a reply" [ref=e226]:
+              - generic [ref=e227]: POST
+              - generic [ref=e228]:
+                - link [ref=e230]:
+                  - /url: "#/Posts/createPost"
+                - generic [ref=e232]: Create a root post or a reply
+            - generic "Copy to clipboard"
+            - button "authorization button unlocked" [ref=e235]
+            - button "post /api/posts" [ref=e238]
+          - generic [ref=e243] [cursor=pointer]:
+            - button "GET /api/posts/captcha Create CAPTCHA" [ref=e244]:
+              - generic [ref=e245]: GET
+              - generic [ref=e246]:
+                - link [ref=e248]:
+                  - /url: "#/Posts/getPostCaptcha"
+                - generic [ref=e250]: Create CAPTCHA
+            - generic "Copy to clipboard"
+            - button "get /api/posts/captcha" [ref=e253]
+          - generic [ref=e258] [cursor=pointer]:
+            - 'button "GET /api/posts/{postId} Get one display-ready post" [ref=e259]':
+              - generic [ref=e260]: GET
+              - generic [ref=e261]:
+                - link [ref=e263]:
+                  - /url: "#/Posts/getPost"
+                - generic [ref=e265]: Get one display-ready post
+            - generic "Copy to clipboard"
+            - 'button "get /api/posts/{postId}" [ref=e268]'
+      - generic [ref=e272]:
+        - heading [level=3] [ref=e273] [cursor=pointer]:
+          - link "Maintenance" [ref=e274]:
+            - /url: "#/Maintenance"
+          - button "Collapse operation" [expanded] [ref=e275]
+        - generic [ref=e282] [cursor=pointer]:
+          - button "DELETE /api/erase-all-data Erase all project data" [expanded] [ref=e283]:
+            - generic [ref=e284]: DELETE
+            - generic [ref=e285]:
+              - link [ref=e287]:
+                - /url: "#/Maintenance/eraseAllData"
+              - generic [ref=e289]: Erase all project data
+          - generic "Copy to clipboard"
+          - button "delete /api/erase-all-data" [expanded] [ref=e292]
+    - generic [ref=e302]:
+      - heading [level=4] [ref=e303] [cursor=pointer]:
+        - button "Schemas" [expanded] [ref=e304]
+      - generic [ref=e308]:
+        - button "GetCurrentUserResponseDto" [ref=e311] [cursor=pointer]
+        - button "ErrorResponseDto" [ref=e317] [cursor=pointer]
+        - button "RegisterUserDto" [ref=e323] [cursor=pointer]
+        - button "RegisterUserResponseDto" [ref=e329] [cursor=pointer]
+        - button "LoginUserDto" [ref=e335] [cursor=pointer]
+        - button "AccessTokenResponseDto" [ref=e341] [cursor=pointer]
+        - button "CreateUploadDto" [ref=e347] [cursor=pointer]
+        - button "CreateUploadResponseDto" [ref=e353] [cursor=pointer]
+        - button "PostResponseDto" [ref=e359] [cursor=pointer]
+        - button "GetPostsResponseDto" [ref=e365] [cursor=pointer]
+        - button "CaptchaResponseDto" [ref=e371] [cursor=pointer]
+        - button "CreatePostDto" [ref=e377] [cursor=pointer]
+        - button "CreatePostResponseDto" [ref=e383] [cursor=pointer]

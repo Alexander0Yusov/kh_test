@@ -13,6 +13,7 @@ import { PostModule } from './post-module/post.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo';
 import { CoreConfig } from '../../../../libs/common/src/config/core-config';
+import { RedisModule } from '../common/redis/redis.module';
 
 @Injectable()
 class GatewayLifecycleLogger
@@ -32,6 +33,7 @@ class GatewayLifecycleLogger
 @Module({
   imports: [
     GatewayConfigModule,
+    RedisModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
       imports: [GatewayConfigModule],

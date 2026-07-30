@@ -53,7 +53,29 @@ services:
       timeout: 5s
       retries: 20
 
+  dzencode-redis:
+    image: redis:8.8.1-alpine
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--appendfsync',
+        'everysec',
+      ]
+    ports:
+      - '127.0.0.1:6380:6379'
+    volumes:
+      - dzencode-redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
 volumes:
   dzencode-postgres-data:
   dzencode-localstack-data:
   dzencode-rabbitmq-data:
+  dzencode-redis-data:
