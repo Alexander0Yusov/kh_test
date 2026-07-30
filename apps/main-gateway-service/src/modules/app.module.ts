@@ -10,6 +10,9 @@ import { FileModule } from './file-module/file.module';
 import { UserModule } from './user-module';
 import { MaintenanceModule } from './maintenance-module/maintenance.module';
 import { PostModule } from './post-module/post.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo';
+import { CoreConfig } from '../../../../libs/common/src/config/core-config';
 
 @Injectable()
 class GatewayLifecycleLogger
@@ -29,6 +32,21 @@ class GatewayLifecycleLogger
 @Module({
   imports: [
     GatewayConfigModule,
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      imports: [GatewayConfigModule],
+      inject: [CoreConfig],
+      useFactory: (config: CoreConfig): ApolloDriverConfig => ({
+        driver: ApolloDriver,
+        path: 'graphql',
+        useGlobalPrefix: true,
+        autoSchemaFile: true,
+        sortSchema: true,
+        playground: false,
+        introspection: config.nodeEnv !== 'production',
+        includeStacktraceInErrorResponses: false,
+      }),
+    }),
     UserModule,
     FileModule,
     PostModule,

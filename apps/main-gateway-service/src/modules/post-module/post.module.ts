@@ -26,6 +26,7 @@ import {
   GetCaptchaHandler,
 } from './application/queries/get-captcha.query';
 import { InMemoryCaptchaService } from './infrastructure/in-memory-captcha.service';
+import { PostsResolver } from './presentation/graphql/posts.resolver';
 
 function createPostsClientOptions(config: GatewayConfig): ClientProvider {
   return {
@@ -65,6 +66,7 @@ function createPostsClientOptions(config: GatewayConfig): ClientProvider {
     GetPostHandler,
     GetCaptchaHandler,
     PostsWebSocketGateway,
+    PostsResolver,
     {
       provide: CaptchaService,
       useClass: InMemoryCaptchaService,

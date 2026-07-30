@@ -11,9 +11,13 @@ import {
   FULL_POST_FIELDS,
   type GetPostsItem,
 } from './get-posts.query';
+import type { PostOptionalField } from '../contracts/posts.client';
 
 export class GetPostQuery {
-  public constructor(public readonly postId: string) {}
+  public constructor(
+    public readonly postId: string,
+    public readonly fields: PostOptionalField[] = FULL_POST_FIELDS,
+  ) {}
 }
 
 export type GetPostResult = GetPostsItem;
@@ -31,9 +35,12 @@ export class GetPostHandler implements IQueryHandler<
 
   public async execute(query: GetPostQuery): Promise<GetPostResult> {
     const post = await this.postsClient.getPost(query.postId);
-    const user = await this.userRepository.findById(post.userId);
+    const fields = new Set<PostOptionalField>(['userName', ...query.fields]);
+    const user = fields.has('avatar')
+      ? await this.userRepository.findById(post.userId)
+      : undefined;
 
-    if (user === null) {
+    if (fields.has('avatar') && (user === null || user === undefined)) {
       throw new DomainException({
         code: DomainExceptionCode.InvalidBusinessState,
         message: 'Post author data is unavailable.',
@@ -42,21 +49,21 @@ export class GetPostHandler implements IQueryHandler<
         ],
       });
     }
+    const resolvedUser = user ?? undefined;
 
-    const fileIds = [
-      user.avatarFileId,
-      ...(post.attachmentFileId === null ? [] : [post.attachmentFileId]),
-    ];
-    const files = await this.filesClient.getFiles([...new Set(fileIds)]);
+    const fileIds = new Set<string>();
+    if (fields.has('avatar') && resolvedUser !== undefined) {
+      fileIds.add(resolvedUser.avatarFileId);
+    }
+    if (fields.has('attachment') && post.attachmentFileId !== null) {
+      fileIds.add(post.attachmentFileId);
+    }
+    const files =
+      fileIds.size === 0 ? [] : await this.filesClient.getFiles([...fileIds]);
     const urlsByFileId = new Map(
       files.map((file) => [file.fileId, file.publicUrl]),
     );
 
-    return buildPostResponse(
-      post,
-      user,
-      urlsByFileId,
-      new Set(FULL_POST_FIELDS),
-    );
+    return buildPostResponse(post, resolvedUser, urlsByFileId, fields);
   }
 }

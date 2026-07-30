@@ -19,7 +19,6 @@ const SORT_BY_VALUES: RootPostSortBy[] = ['createdAt', 'userName', 'email'];
 const SORT_DIRECTION_VALUES: SortDirection[] = ['asc', 'desc'];
 const OPTIONAL_FIELD_VALUES: PostOptionalField[] = [
   'avatar',
-  'userName',
   'email',
   'homePage',
   'publishDate',
@@ -54,7 +53,7 @@ export class GetPostsQueryDto {
     type: 'string',
     example: 'avatar,userName,email,homePage,publishDate,attachment',
     description:
-      'Comma-separated optional fields. An empty value requests structural fields only.',
+      'Comma-separated optional fields. An empty value keeps structural fields, message, and userName.',
   })
   @Transform(parseFields)
   @IsOptional()
@@ -82,8 +81,8 @@ export class PostResponseDto {
   @ApiPropertyOptional({ format: 'date-time' })
   public publishDate?: Date;
 
-  @ApiPropertyOptional({ example: 'Alexander' })
-  public userName?: string;
+  @ApiProperty({ example: 'Alexander' })
+  public userName!: string;
 
   @ApiPropertyOptional({ format: 'email', example: 'alex@example.com' })
   public email?: string;

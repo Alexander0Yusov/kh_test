@@ -32,7 +32,7 @@ export type GetPostsItem = {
   path: string;
   message: string;
   publishDate?: Date;
-  userName?: string;
+  userName: string;
   email?: string;
   homePage?: string | null;
   avatarUrl?: string | null;
@@ -76,7 +76,7 @@ export class GetPostsHandler implements IQueryHandler<
         items: [],
         nextCursor: rootPage.nextCursor ?? null,
         hasMore: rootPage.hasMore,
-        fields: rootPage.resolvedFields,
+        fields: publicOptionalFields(rootPage.resolvedFields),
       };
     }
 
@@ -122,7 +122,7 @@ export class GetPostsHandler implements IQueryHandler<
       }),
       nextCursor: rootPage.nextCursor ?? null,
       hasMore: rootPage.hasMore,
-      fields: rootPage.resolvedFields,
+      fields: publicOptionalFields(rootPage.resolvedFields),
     };
   }
 
@@ -132,7 +132,10 @@ export class GetPostsHandler implements IQueryHandler<
       sortBy: query.sortBy,
       sortDirection: query.sortDirection,
       limit: query.limit,
-      fields: query.fields,
+      fields:
+        query.fields === undefined
+          ? undefined
+          : [...new Set<PostOptionalField>(['userName', ...query.fields])],
     };
   }
 }
@@ -149,8 +152,8 @@ export function buildPostResponse(
     rootId: post.rootId,
     path: post.path,
     message: post.message,
+    userName: post.userName,
     ...(fields.has('publishDate') ? { publishDate: post.createdAt } : {}),
-    ...(fields.has('userName') ? { userName: post.userName } : {}),
     ...(fields.has('email') ? { email: post.email } : {}),
     ...(fields.has('homePage') ? { homePage: post.homePage } : {}),
     ...(fields.has('avatar')
@@ -170,6 +173,12 @@ export function buildPostResponse(
         }
       : {}),
   };
+}
+
+function publicOptionalFields(
+  fields: PostOptionalField[],
+): PostOptionalField[] {
+  return fields.filter((field) => field !== 'userName');
 }
 
 function missingUserException(): DomainException {
