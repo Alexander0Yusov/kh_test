@@ -15,9 +15,12 @@ import { PostsClient } from './application/contracts/posts.client';
 import { PostsGrpcClient } from './infrastructure/posts-grpc.client';
 import { CreatePostHandler } from './application/commands/create-post.command';
 import { GetPostsHandler } from './application/queries/get-posts.query';
+import { GetPostHandler } from './application/queries/get-post.query';
 import { FileModule } from '../file-module/file.module';
 import { UserModule } from '../user-module';
 import { PostsController } from './presentation/posts.controller';
+import { PostCreatedConsumer } from './presentation/rabbitmq/post-created.consumer';
+import { PostsWebSocketGateway } from './presentation/websocket/posts-websocket.gateway';
 
 function createPostsClientOptions(config: GatewayConfig): ClientProvider {
   return {
@@ -50,10 +53,12 @@ function createPostsClientOptions(config: GatewayConfig): ClientProvider {
       },
     ]),
   ],
-  controllers: [PostsController],
+  controllers: [PostsController, PostCreatedConsumer],
   providers: [
     CreatePostHandler,
     GetPostsHandler,
+    GetPostHandler,
+    PostsWebSocketGateway,
     {
       provide: PostsClient,
       useClass: PostsGrpcClient,

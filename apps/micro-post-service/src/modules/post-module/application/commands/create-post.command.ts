@@ -42,7 +42,9 @@ export class CreatePostHandler implements ICommandHandler<
   ) {}
 
   public async execute(command: CreatePostCommand): Promise<CreatePostResult> {
-    if ((await this.postUserRepository.findById(command.userId)) === null) {
+    const postUser = await this.postUserRepository.findById(command.userId);
+
+    if (postUser === null) {
       throw new DomainException({
         code: DomainExceptionCode.InvalidBusinessState,
         message: 'The Posts user projection is not ready.',
@@ -82,6 +84,11 @@ export class CreatePostHandler implements ICommandHandler<
     await this.postEventsPublisher.publishCreated({
       postId: post.id,
       userId: post.userId,
+      parentId: post.parentId,
+      rootId: post.rootId,
+      publishDate: post.createdAt.toISOString(),
+      userName: postUser.userName,
+      email: postUser.email,
       attachmentFileId: post.attachmentFileId,
     });
 

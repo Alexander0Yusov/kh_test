@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBadRequestResponse,
@@ -8,6 +16,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiServiceUnavailableResponse,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -28,6 +37,10 @@ import {
   GetPostsQuery,
   type GetPostsResult,
 } from '../application/queries/get-posts.query';
+import {
+  GetPostQuery,
+  type GetPostResult,
+} from '../application/queries/get-post.query';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -58,6 +71,37 @@ export class PostsController {
         dto.fields,
       ),
     );
+  }
+
+  @Get(':postId')
+  @ApiOperation({
+    operationId: 'getPost',
+    summary: 'Get one display-ready post',
+  })
+  @ApiParam({ name: 'postId', format: 'uuid' })
+  @ApiOkResponse({
+    schema: {
+      allOf: [{ $ref: '#/components/schemas/PostResponseDto' }],
+      required: [
+        'id',
+        'parentId',
+        'rootId',
+        'path',
+        'message',
+        'publishDate',
+        'userName',
+        'email',
+        'homePage',
+        'avatarUrl',
+        'attachmentUrl',
+      ],
+    },
+  })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiNotFoundResponse({ type: ErrorResponseDto })
+  @ApiServiceUnavailableResponse({ type: ErrorResponseDto })
+  public getPost(@Param('postId') postId: string): Promise<GetPostResult> {
+    return this.queryBus.execute(new GetPostQuery(postId));
   }
 
   @Post()

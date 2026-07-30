@@ -5,6 +5,7 @@ import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { grpcErrorToDomainException } from '../../../../../../libs/bootstrap/src';
 import {
   type CreatePostRequest as GrpcCreatePostRequest,
+  type PostDto,
   PostOptionalField as GrpcPostOptionalField,
   POSTS_SERVICE_NAME,
   RootPostSortBy as GrpcRootPostSortBy,
@@ -78,25 +79,21 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
         ),
     );
 
-    return (response.posts ?? []).map((post) => {
-      if (post.createdAt === undefined) {
-        throw new Error('Posts Service returned no creation timestamp.');
-      }
+    return (response.posts ?? []).map(toPostTreeItem);
+  }
 
-      return {
-        id: post.id,
-        userId: post.userId,
-        parentId: post.parentId ?? null,
-        rootId: post.rootId ?? null,
-        path: post.path,
-        message: post.message,
-        attachmentFileId: post.attachmentFileId ?? null,
-        createdAt: new Date(
-          post.createdAt.seconds * 1000 +
-            Math.floor(post.createdAt.nanos / 1_000_000),
+  public async getPost(postId: string): Promise<PostTreeItem> {
+    const post = await firstValueFrom(
+      this.postsService
+        .getPost({ postId })
+        .pipe(
+          catchError((error: ServiceError) =>
+            throwError(() => grpcErrorToDomainException(error)),
+          ),
         ),
-      };
-    });
+    );
+
+    return toPostTreeItem(post);
   }
 
   public onModuleInit(): void {
@@ -150,6 +147,26 @@ export class PostsGrpcClient extends PostsClient implements OnModuleInit {
         ),
     );
   }
+}
+
+function toPostTreeItem(post: PostDto): PostTreeItem {
+  if (post.createdAt === undefined) {
+    throw new Error('Posts Service returned no creation timestamp.');
+  }
+
+  return {
+    id: post.id,
+    userId: post.userId,
+    parentId: post.parentId ?? null,
+    rootId: post.rootId ?? null,
+    path: post.path,
+    message: post.message,
+    attachmentFileId: post.attachmentFileId ?? null,
+    createdAt: new Date(
+      post.createdAt.seconds * 1000 +
+        Math.floor(post.createdAt.nanos / 1_000_000),
+    ),
+  };
 }
 
 function toGrpcSortBy(value: GetRootPostsInput['sortBy']): GrpcRootPostSortBy {

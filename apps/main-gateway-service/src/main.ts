@@ -14,6 +14,7 @@ import {
 import { loadServiceEnvironment } from '../../../libs/common/src/config';
 import { GatewayConfig } from './common/config/gateway-config';
 import { setupFileEventsTopology } from './common/rabbitmq/setup-file-events-topology';
+import { setupPostEventsTopology } from './common/rabbitmq/setup-post-events-topology';
 import { setupSwagger } from './common/swagger/setup-swagger';
 import { CoreConfig } from '../../../libs/common/src/config/core-config';
 
@@ -39,11 +40,24 @@ async function bootstrap(): Promise<void> {
   setupSwagger(app);
 
   await setupFileEventsTopology(coreConfig);
+  await setupPostEventsTopology(coreConfig);
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
       urls: [coreConfig.rabbitmqUrl],
       queue: coreConfig.rabbitMqGatewayFilesQueue,
+      queueOptions: {
+        durable: true,
+      },
+      noAck: false,
+      prefetchCount: 1,
+    },
+  });
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [coreConfig.rabbitmqUrl],
+      queue: coreConfig.rabbitMqGatewayPostsQueue,
       queueOptions: {
         durable: true,
       },

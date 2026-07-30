@@ -8,6 +8,7 @@ import {
   type GetRootPostsResponse,
   type GetPostsByRootIdsRequest,
   type GetPostsByRootIdsResponse,
+  type GetPostRequest,
   PostOptionalField as GrpcPostOptionalField,
   type PostDto,
   POSTS_SERVICE_NAME,
@@ -36,6 +37,10 @@ import type {
   RootPostSortBy,
   SortDirection,
 } from '../../application/contracts/post-query.repository';
+import {
+  GetPostQuery,
+  type GetPostResult,
+} from '../../application/queries/get-post.query';
 
 @Controller()
 export class PostsGrpcController {
@@ -112,25 +117,17 @@ export class PostsGrpcController {
     >(new GetPostsByRootIdsQuery(request.rootIds ?? []));
 
     return {
-      posts: result.posts.map((post) => {
-        const milliseconds = post.createdAt.getTime();
-
-        return {
-          id: post.id,
-          userId: post.userId,
-          parentId: post.parentId ?? undefined,
-          rootId: post.rootId ?? undefined,
-          path: post.path,
-          childCounter: undefined,
-          message: post.message,
-          attachmentFileId: post.attachmentFileId ?? undefined,
-          createdAt: {
-            seconds: Math.floor(milliseconds / 1000),
-            nanos: (milliseconds % 1000) * 1_000_000,
-          },
-        };
-      }),
+      posts: result.posts.map(toPostDto),
     };
+  }
+
+  @GrpcMethod(POSTS_SERVICE_NAME, 'GetPost')
+  public async getPost(request: GetPostRequest): Promise<PostDto> {
+    const result = await this.queryBus.execute<GetPostQuery, GetPostResult>(
+      new GetPostQuery(request.postId),
+    );
+
+    return toPostDto(result);
   }
 
   @GrpcMethod(POSTS_SERVICE_NAME, 'EraseAllData')
@@ -138,6 +135,25 @@ export class PostsGrpcController {
     await this.commandBus.execute(new EraseAllDataCommand());
     return {};
   }
+}
+
+function toPostDto(post: GetPostResult): PostDto {
+  const milliseconds = post.createdAt.getTime();
+
+  return {
+    id: post.id,
+    userId: post.userId,
+    parentId: post.parentId ?? undefined,
+    rootId: post.rootId ?? undefined,
+    path: post.path,
+    childCounter: undefined,
+    message: post.message,
+    attachmentFileId: post.attachmentFileId ?? undefined,
+    createdAt: {
+      seconds: Math.floor(milliseconds / 1000),
+      nanos: (milliseconds % 1000) * 1_000_000,
+    },
+  };
 }
 
 function toSortBy(value?: GrpcRootPostSortBy): RootPostSortBy | undefined {

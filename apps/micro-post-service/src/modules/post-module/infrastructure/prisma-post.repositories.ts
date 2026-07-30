@@ -248,6 +248,22 @@ export class PrismaPostQueryRepository extends PostQueryRepository {
     });
   }
 
+  public findById(id: string): Promise<PostTreeRow | null> {
+    return this.prisma.post.findFirst({
+      where: { id, deletedAt: null },
+      select: {
+        id: true,
+        userId: true,
+        parentId: true,
+        rootId: true,
+        path: true,
+        message: true,
+        attachmentFileId: true,
+        createdAt: true,
+      },
+    });
+  }
+
   private positionWhere(query: FindRootPageQuery): Prisma.PostWhereInput {
     if (query.position === null) {
       return {};

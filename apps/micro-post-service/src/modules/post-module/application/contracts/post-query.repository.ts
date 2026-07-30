@@ -37,4 +37,6 @@ export abstract class PostQueryRepository {
   ): Promise<RootPostPageItem[]>;
 
   public abstract findByRootIds(rootIds: string[]): Promise<PostTreeRow[]>;
+
+  public abstract findById(id: string): Promise<PostTreeRow | null>;
 }

@@ -72,6 +72,10 @@ export interface GetPostsByRootIdsResponse {
   posts: PostDto[];
 }
 
+export interface GetPostRequest {
+  postId: string;
+}
+
 export interface PostDto {
   id: string;
   userId: string;
@@ -93,6 +97,8 @@ export interface PostsServiceClient {
 
   getPostsByRootIds(request: GetPostsByRootIdsRequest): Observable<GetPostsByRootIdsResponse>;
 
+  getPost(request: GetPostRequest): Observable<PostDto>;
+
   eraseAllData(request: Empty): Observable<Empty>;
 }
 
@@ -107,12 +113,14 @@ export interface PostsServiceController {
     request: GetPostsByRootIdsRequest,
   ): Promise<GetPostsByRootIdsResponse> | Observable<GetPostsByRootIdsResponse> | GetPostsByRootIdsResponse;
 
+  getPost(request: GetPostRequest): Promise<PostDto> | Observable<PostDto> | PostDto;
+
   eraseAllData(request: Empty): void | Promise<void>;
 }
 
 export function PostsServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["createPost", "getRootPosts", "getPostsByRootIds", "eraseAllData"];
+    const grpcMethods: string[] = ["createPost", "getRootPosts", "getPostsByRootIds", "getPost", "eraseAllData"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("PostsService", method)(constructor.prototype[method], method, descriptor);

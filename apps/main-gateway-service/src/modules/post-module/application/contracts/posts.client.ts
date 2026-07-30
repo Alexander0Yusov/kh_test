@@ -55,5 +55,7 @@ export abstract class PostsClient {
 
   public abstract getPostsByRootIds(rootIds: string[]): Promise<PostTreeItem[]>;
 
+  public abstract getPost(postId: string): Promise<PostTreeItem>;
+
   public abstract eraseAllData(): Promise<void>;
 }

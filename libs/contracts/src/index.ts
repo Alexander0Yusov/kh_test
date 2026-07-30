@@ -24,6 +24,7 @@ export {
   type GetRootPostsResponse,
   type GetPostsByRootIdsRequest,
   type GetPostsByRootIdsResponse,
+  type GetPostRequest,
   type PostOptionalFields,
   type PostDto,
   type PostsServiceClient,

@@ -5,9 +5,11 @@ import {
 } from '../../../../../../../libs/common/src';
 import { FilesClient } from '../../../file-module/application/contracts/files.client';
 import { UserRepository } from '../../../user-module/application/contracts/user.repository';
+import type { UserEntity } from '../../../user-module/domain';
 import {
   type GetRootPostsInput,
   type PostOptionalField,
+  type PostTreeItem,
   PostsClient,
   type RootPostSortBy,
   type SortDirection,
@@ -43,6 +45,15 @@ export type GetPostsResult = {
   hasMore: boolean;
   fields: PostOptionalField[];
 };
+
+export const FULL_POST_FIELDS: PostOptionalField[] = [
+  'avatar',
+  'userName',
+  'email',
+  'homePage',
+  'publishDate',
+  'attachment',
+];
 
 @QueryHandler(GetPostsQuery)
 export class GetPostsHandler implements IQueryHandler<
@@ -111,33 +122,7 @@ export class GetPostsHandler implements IQueryHandler<
           throw missingUserException();
         }
 
-        return {
-          id: post.id,
-          parentId: post.parentId,
-          rootId: post.rootId,
-          path: post.path,
-          message: post.message,
-          ...(fields.has('publishDate') ? { publishDate: post.createdAt } : {}),
-          ...(fields.has('userName') ? { userName: user?.userName } : {}),
-          ...(fields.has('email') ? { email: user?.email } : {}),
-          ...(fields.has('homePage') ? { homePage: user?.homePage } : {}),
-          ...(fields.has('avatar')
-            ? {
-                avatarUrl:
-                  user === undefined
-                    ? null
-                    : (urlsByFileId.get(user.avatarFileId) ?? null),
-              }
-            : {}),
-          ...(fields.has('attachment')
-            ? {
-                attachmentUrl:
-                  post.attachmentFileId === null
-                    ? null
-                    : (urlsByFileId.get(post.attachmentFileId) ?? null),
-              }
-            : {}),
-        };
+        return buildPostResponse(post, user, urlsByFileId, fields);
       }),
       nextCursor: rootPage.nextCursor ?? null,
       hasMore: rootPage.hasMore,
@@ -154,6 +139,41 @@ export class GetPostsHandler implements IQueryHandler<
       fields: query.fields,
     };
   }
+}
+
+export function buildPostResponse(
+  post: PostTreeItem,
+  user: UserEntity | undefined,
+  urlsByFileId: ReadonlyMap<string, string>,
+  fields: ReadonlySet<PostOptionalField>,
+): GetPostsItem {
+  return {
+    id: post.id,
+    parentId: post.parentId,
+    rootId: post.rootId,
+    path: post.path,
+    message: post.message,
+    ...(fields.has('publishDate') ? { publishDate: post.createdAt } : {}),
+    ...(fields.has('userName') ? { userName: user?.userName } : {}),
+    ...(fields.has('email') ? { email: user?.email } : {}),
+    ...(fields.has('homePage') ? { homePage: user?.homePage } : {}),
+    ...(fields.has('avatar')
+      ? {
+          avatarUrl:
+            user === undefined
+              ? null
+              : (urlsByFileId.get(user.avatarFileId) ?? null),
+        }
+      : {}),
+    ...(fields.has('attachment')
+      ? {
+          attachmentUrl:
+            post.attachmentFileId === null
+              ? null
+              : (urlsByFileId.get(post.attachmentFileId) ?? null),
+        }
+      : {}),
+  };
 }
 
 function missingUserException(): DomainException {
