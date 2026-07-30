@@ -28,22 +28,4 @@ export class LoginUserDto {
   @MinLength(8)
   @MaxLength(128)
   public password!: string;
-
-  @ApiProperty({
-    example: 'browser-device-id',
-    description: 'Client-generated device identifier.',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(128)
-  public deviceId!: string;
-
-  @ApiProperty({
-    example: 'Chrome on Windows',
-    description: 'Human-readable device name.',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(128)
-  public deviceName!: string;
 }

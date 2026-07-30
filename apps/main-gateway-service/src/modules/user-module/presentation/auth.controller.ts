@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Headers,
   HttpCode,
   HttpStatus,
   Ip,
@@ -18,6 +19,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { CoreConfig } from '../../../../../../libs/common/src/config';
 import { GatewayConfig } from '../../../common/config/gateway-config';
@@ -32,6 +34,9 @@ import {
   readRefreshTokenCookie,
   setRefreshTokenCookie,
 } from './refresh-token-cookie';
+
+const SESSION_METADATA_MAX_LENGTH = 128;
+const UNKNOWN_SESSION_METADATA = 'Unknown';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -70,16 +75,17 @@ export class AuthController {
   })
   public async login(
     @Body() dto: LoginUserDto,
-    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string | undefined,
+    @Ip() ip: string | undefined,
     @Res({ passthrough: true }) response: Response,
   ): Promise<AccessTokenResponseDto> {
     const result = await this.commandBus.execute(
       new LoginUserCommand(
         dto.email,
         dto.password,
-        dto.deviceId,
-        dto.deviceName,
-        ip,
+        randomUUID(),
+        normalizeSessionMetadata(userAgent),
+        normalizeSessionMetadata(ip),
       ),
     );
 
@@ -174,4 +180,13 @@ export class AuthController {
 
     await this.commandBus.execute(new LogoutUserCommand(refreshToken));
   }
+}
+
+function normalizeSessionMetadata(value: string | undefined): string {
+  const normalized = (value ?? '')
+    .replace(/\p{Cc}/gu, '')
+    .trim()
+    .slice(0, SESSION_METADATA_MAX_LENGTH);
+
+  return normalized.length === 0 ? UNKNOWN_SESSION_METADATA : normalized;
 }

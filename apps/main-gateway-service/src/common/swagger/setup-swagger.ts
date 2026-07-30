@@ -13,8 +13,8 @@ export function setupSwagger(app: INestApplication): void {
     .setTitle('DzenCode API')
     .setDescription('Public HTTP API exposed by API Gateway')
     .setVersion('1.0.0')
-    .addTag('Users')
     .addTag('Auth')
+    .addTag('Users')
     .addTag('Files')
     .addBearerAuth(
       {
@@ -38,6 +38,10 @@ export function setupSwagger(app: INestApplication): void {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+  const registrationOperation = document.paths['/api/users/register']?.post;
+  if (registrationOperation?.operationId === 'registerUser') {
+    registrationOperation.tags = ['Auth'];
+  }
 
   SwaggerModule.setup('docs', app, document, {
     useGlobalPrefix: true,
