@@ -9,10 +9,6 @@ export type PostCreatedWebSocketEvent = Pick<
 
 @WebSocketGateway({
   namespace: '/posts',
-  cors: {
-    origin: true,
-    credentials: true,
-  },
 })
 export class PostsWebSocketGateway {
   @WebSocketServer()

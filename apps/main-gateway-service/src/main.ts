@@ -17,6 +17,7 @@ import { setupFileEventsTopology } from './common/rabbitmq/setup-file-events-top
 import { setupPostEventsTopology } from './common/rabbitmq/setup-post-events-topology';
 import { setupSwagger } from './common/swagger/setup-swagger';
 import { CoreConfig } from '../../../libs/common/src/config/core-config';
+import { GatewaySocketIoAdapter } from './common/websocket/gateway-socket-io.adapter';
 
 async function bootstrap(): Promise<void> {
   loadServiceEnvironment(join(process.cwd(), 'apps', 'main-gateway-service'));
@@ -36,7 +37,8 @@ async function bootstrap(): Promise<void> {
   setupInterceptors(app);
 
   setupHelmet(app, gatewayConfig.swaggerEnabled);
-  setupCors(app);
+  setupCors(app, gatewayConfig.frontEndUrl);
+  app.useWebSocketAdapter(new GatewaySocketIoAdapter(app, gatewayConfig));
   setupSwagger(app);
 
   await setupFileEventsTopology(coreConfig);

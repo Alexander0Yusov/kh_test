@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { type MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'node:path';
 import { AppModule } from './modules/app.module';
-import { setupGrpcFilters } from '../../../libs/bootstrap/src';
+import { setupGrpcFilters, setupLogger } from '../../../libs/bootstrap/src';
 import { loadServiceEnvironment } from '../../../libs/common/src/config';
 import { FILES_V1_PACKAGE_NAME } from '../../../libs/contracts/src';
 import { FilesConfig } from './common/config/files-config';
@@ -19,6 +19,7 @@ async function bootstrap(): Promise<void> {
   const filesConfig = app.get(FilesConfig);
   const coreConfig = app.get(CoreConfig);
 
+  setupLogger(app);
   await setupUserEventsTopology(coreConfig);
   await setupPostEventsTopology(coreConfig);
   setupGrpcFilters(app);

@@ -7,6 +7,7 @@ import {
   IsNumber,
   IsPositive,
   IsString,
+  IsUrl,
 } from 'class-validator';
 import { configValidationUtility } from '../../../../../libs/common/src/config/config-validation.utility';
 
@@ -17,6 +18,14 @@ export class GatewayConfig {
   port: number;
 
   @IsString({ message: 'Env variable FRONTEND_URL must be a string' })
+  @IsUrl(
+    {
+      protocols: ['http', 'https'],
+      require_protocol: true,
+      require_tld: false,
+    },
+    { message: 'Env variable FRONTEND_URL must be a valid URL' },
+  )
   @IsNotEmpty({
     message: 'Set Env variable FRONTEND_URL, example: https://inctagram.com',
   })

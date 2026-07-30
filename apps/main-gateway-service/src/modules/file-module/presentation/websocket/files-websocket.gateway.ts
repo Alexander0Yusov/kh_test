@@ -20,10 +20,6 @@ type SubscribePayload = {
 
 @WebSocketGateway({
   namespace: '/files',
-  cors: {
-    origin: true,
-    credentials: true,
-  },
 })
 export class FilesWebSocketGateway {
   @WebSocketServer()
