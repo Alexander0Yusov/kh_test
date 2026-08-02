@@ -2,6 +2,8 @@ dist/
 node_modules/
 
 .env*
+!.env.production.example
+!apps/**/.env.production.example
 
 docs
 

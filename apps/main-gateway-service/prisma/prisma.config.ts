@@ -1,11 +1,8 @@
 import { join } from 'node:path';
 import { defineConfig, env } from 'prisma/config';
+import { loadServiceEnvironment } from '../../../libs/common/src/config';
 
-const environment = process.env.NODE_ENV ?? 'development';
-
-process.loadEnvFile(
-  join(process.cwd(), 'apps', 'main-gateway-service', `.env.${environment}`),
-);
+loadServiceEnvironment(join(process.cwd(), 'apps', 'main-gateway-service'));
 
 export default defineConfig({
   schema: './schema.prisma',
