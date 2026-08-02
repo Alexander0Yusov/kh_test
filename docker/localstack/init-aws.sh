@@ -2,6 +2,20 @@
 
 set -eu
 
+: "${STORAGE_CORS_ALLOWED_ORIGIN:?Set STORAGE_CORS_ALLOWED_ORIGIN}"
+
+configure_bucket_cors() {
+  bucket="$1"
+  cors_file="/tmp/$bucket-cors.json"
+
+  printf \
+    '{"CORSRules":[{"AllowedOrigins":["%s"],"AllowedMethods":["GET","POST","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag"],"MaxAgeSeconds":3000}]}' \
+    "$STORAGE_CORS_ALLOWED_ORIGIN" >"$cors_file"
+  awslocal s3api put-bucket-cors \
+    --bucket "$bucket" \
+    --cors-configuration "file://$cors_file"
+}
+
 configure_storage_events() {
   bucket="$1"
   queue_name="$2"
@@ -9,6 +23,7 @@ configure_storage_events() {
 
   awslocal s3api head-bucket --bucket "$bucket" >/dev/null 2>&1 ||
     awslocal s3api create-bucket --bucket "$bucket" >/dev/null
+  configure_bucket_cors "$bucket"
 
   queue_url="$(awslocal sqs create-queue \
     --queue-name "$queue_name" \

@@ -22,6 +22,7 @@ services:
       SERVICES: s3,sqs
       AWS_DEFAULT_REGION: us-east-1
       PERSISTENCE: 1
+      STORAGE_CORS_ALLOWED_ORIGIN: http://localhost:4200
     ports:
       - '127.0.0.1:${LOCALSTACK_PORT}:4566'
     volumes:
