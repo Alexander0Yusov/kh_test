@@ -35,3 +35,7 @@ yarn-error.log*
 docker-data/
 minio-data/
 postgres-data/
+.deployment-image-tags
+.deployment-state.json
+.caddyfile.sha256
+deploy/logs/

@@ -1,0 +1,196 @@
+name: dzencode-production
+
+x-app-service: &app-service
+  platform: linux/amd64
+  init: true
+  restart: unless-stopped
+  stop_grace_period: 30s
+  networks: [application]
+  security_opt: [no-new-privileges:true]
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-common-environment: &common-environment
+  NODE_ENV: production
+  RABBITMQ_URL: ${RABBITMQ_URL:?RABBITMQ_URL is required}
+
+services:
+  reverse-proxy:
+    image: caddy:2.10.2-alpine
+    platform: linux/amd64
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is required}
+      API_HOST: ${API_HOST:?API_HOST is required}
+      FRONTEND_HOST: ${FRONTEND_HOST:?FRONTEND_HOST is required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [application]
+    mem_limit: 128m
+    cpus: 0.25
+    logging: *default-logging
+    depends_on:
+      gateway:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+
+  frontend:
+    <<: *app-service
+    image: ghcr.io/${GHCR_NAMESPACE:?GHCR_NAMESPACE is required}/dzencode-frontend:${FRONTEND_IMAGE_TAG:?FRONTEND_IMAGE_TAG is required}
+    environment:
+      BACKEND_URL: https://${API_HOST:?API_HOST is required}/api
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+    expose: ["3000"]
+    mem_limit: 512m
+    cpus: 0.50
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/runtime-config').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  gateway:
+    <<: *app-service
+    image: ghcr.io/${GHCR_NAMESPACE:?GHCR_NAMESPACE is required}/dzencode-gateway:${GATEWAY_IMAGE_TAG:?GATEWAY_IMAGE_TAG is required}
+    environment:
+      <<: *common-environment
+      PORT: 3000
+      PRISMA_DB_URL: ${GATEWAY_PRISMA_DB_URL:?GATEWAY_PRISMA_DB_URL is required}
+      FRONTEND_URL: https://${FRONTEND_HOST:?FRONTEND_HOST is required}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
+      JWT_ACCESS_TTL_SECONDS: ${JWT_ACCESS_TTL_SECONDS:-3600}
+      JWT_REFRESH_TTL_SECONDS: ${JWT_REFRESH_TTL_SECONDS:-7200}
+      REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
+      FILE_SERVICE_GRPC_URL: file-service:50052
+      POST_SERVICE_GRPC_URL: post-service:50053
+      CAPTCHA_TTL_SECONDS: ${CAPTCHA_TTL_SECONDS:-300}
+    expose: ["3000"]
+    mem_limit: 768m
+    cpus: 0.75
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=require('node:net').connect(3000,'127.0.0.1');s.setTimeout(3000);s.on('connect',()=>{s.end();process.exit(0)});s.on('timeout',()=>process.exit(1));s.on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      file-service:
+        condition: service_healthy
+      post-service:
+        condition: service_healthy
+
+  file-service:
+    <<: *app-service
+    image: ghcr.io/${GHCR_NAMESPACE:?GHCR_NAMESPACE is required}/dzencode-file-service:${FILE_SERVICE_IMAGE_TAG:?FILE_SERVICE_IMAGE_TAG is required}
+    environment:
+      <<: *common-environment
+      PORT: 3002
+      PRISMA_DB_URL: ${FILE_PRISMA_DB_URL:?FILE_PRISMA_DB_URL is required}
+      AWS_REGION: ${AWS_REGION:?AWS_REGION is required}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      S3_BUCKET: ${S3_BUCKET:?S3_BUCKET is required}
+      S3_FORCE_PATH_STYLE: "false"
+      SQS_QUEUE_URL: ${SQS_QUEUE_URL:?SQS_QUEUE_URL is required}
+      SQS_WAIT_TIME_SECONDS: ${SQS_WAIT_TIME_SECONDS:-20}
+      SQS_VISIBILITY_TIMEOUT_SECONDS: ${SQS_VISIBILITY_TIMEOUT_SECONDS:-60}
+      FILES_MAX_UPLOAD_SIZE_BYTES: ${FILES_MAX_UPLOAD_SIZE_BYTES:-102400}
+      FILES_PRESIGNED_POST_TTL_SECONDS: ${FILES_PRESIGNED_POST_TTL_SECONDS:-900}
+      FILES_DOWNLOAD_URL_TTL_SECONDS: ${FILES_DOWNLOAD_URL_TTL_SECONDS:-900}
+      FILES_GRPC_URL: 0.0.0.0:50052
+    expose: ["50052"]
+    mem_limit: 512m
+    cpus: 0.50
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=require('node:net').connect(50052,'127.0.0.1');s.setTimeout(3000);s.on('connect',()=>{s.end();process.exit(0)});s.on('timeout',()=>process.exit(1));s.on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  post-service:
+    <<: *app-service
+    image: ghcr.io/${GHCR_NAMESPACE:?GHCR_NAMESPACE is required}/dzencode-post-service:${POST_SERVICE_IMAGE_TAG:?POST_SERVICE_IMAGE_TAG is required}
+    environment:
+      <<: *common-environment
+      PRISMA_DB_URL: ${POST_PRISMA_DB_URL:?POST_PRISMA_DB_URL is required}
+      POSTS_GRPC_URL: 0.0.0.0:50053
+    expose: ["50053"]
+    mem_limit: 384m
+    cpus: 0.40
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=require('node:net').connect(50053,'127.0.0.1');s.setTimeout(3000);s.on('connect',()=>{s.end();process.exit(0)});s.on('timeout',()=>process.exit(1));s.on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  gateway-migrations:
+    image: ghcr.io/${GHCR_NAMESPACE:?GHCR_NAMESPACE is required}/dzencode-migrations:${GATEWAY_IMAGE_TAG:?GATEWAY_IMAGE_TAG is required}
+    platform: linux/amd64
+    profiles: [migrations]
+    restart: "no"
+    networks: [application]
+    mem_limit: 768m
+    cpus: 1.00
+    logging: *default-logging
+    environment:
+      NODE_ENV: production
+      PRISMA_DB_URL: ${GATEWAY_PRISMA_DB_URL:?GATEWAY_PRISMA_DB_URL is required}
+    command: ["pnpm", "prisma:migrate:deploy:gateway"]
+
+  file-migrations:
+    image: ghcr.io/${GHCR_NAMESPACE:?GHCR_NAMESPACE is required}/dzencode-migrations:${FILE_SERVICE_IMAGE_TAG:?FILE_SERVICE_IMAGE_TAG is required}
+    platform: linux/amd64
+    profiles: [migrations]
+    restart: "no"
+    networks: [application]
+    mem_limit: 768m
+    cpus: 1.00
+    logging: *default-logging
+    environment:
+      NODE_ENV: production
+      PRISMA_DB_URL: ${FILE_PRISMA_DB_URL:?FILE_PRISMA_DB_URL is required}
+    command: ["pnpm", "prisma:migrate:deploy:file"]
+
+  post-migrations:
+    image: ghcr.io/${GHCR_NAMESPACE:?GHCR_NAMESPACE is required}/dzencode-migrations:${POST_SERVICE_IMAGE_TAG:?POST_SERVICE_IMAGE_TAG is required}
+    platform: linux/amd64
+    profiles: [migrations]
+    restart: "no"
+    networks: [application]
+    mem_limit: 768m
+    cpus: 1.00
+    logging: *default-logging
+    environment:
+      NODE_ENV: production
+      PRISMA_DB_URL: ${POST_PRISMA_DB_URL:?POST_PRISMA_DB_URL is required}
+    command: ["pnpm", "prisma:migrate:deploy:post"]
+
+networks:
+  application:
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:

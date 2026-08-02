@@ -139,12 +139,18 @@ export class FilesConfig {
   constructor(
     private readonly configService: ConfigService<Record<string, string>, true>,
   ) {
+    const awsAccessKeyId: string | undefined =
+      this.configService.get('AWS_ACCESS_KEY_ID');
+    const awsSecretAccessKey: string | undefined = this.configService.get(
+      'AWS_SECRET_ACCESS_KEY',
+    );
+
     this.nodeEnv = this.configService.get('NODE_ENV');
     this.port = Number(this.configService.get('PORT'));
     this.prismaDbUrl = this.configService.get('PRISMA_DB_URL');
     this.awsRegion = this.configService.get('AWS_REGION');
-    this.awsAccessKeyId = this.configService.get('AWS_ACCESS_KEY_ID');
-    this.awsSecretAccessKey = this.configService.get('AWS_SECRET_ACCESS_KEY');
+    this.awsAccessKeyId = awsAccessKeyId?.trim() || undefined;
+    this.awsSecretAccessKey = awsSecretAccessKey?.trim() || undefined;
     this.s3Endpoint = this.configService.get('S3_ENDPOINT');
     this.s3Bucket = this.configService.get('S3_BUCKET');
     this.s3ForcePathStyle = configValidationUtility.convertToBoolean(
@@ -176,12 +182,10 @@ export class FilesConfig {
   private validateEnvironment(): void {
     if (
       this.nodeEnv === 'production' &&
-      (this.awsAccessKeyId !== undefined ||
-        this.awsSecretAccessKey !== undefined ||
-        this.sqsEndpoint !== undefined)
+      (this.s3Endpoint !== undefined || this.sqsEndpoint !== undefined)
     ) {
       throw new Error(
-        'AWS credentials and SQS_ENDPOINT must be absent in Production',
+        'S3_ENDPOINT and SQS_ENDPOINT must be absent in Production',
       );
     }
   }

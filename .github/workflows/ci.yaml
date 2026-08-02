@@ -1,0 +1,53 @@
+name: Backend CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.1
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm contracts:lint
+      - run: pnpm contracts:generate
+      - run: git diff --exit-code -- libs/contracts/src
+      - run: pnpm prisma:generate
+        env:
+          NODE_ENV: production
+          PRISMA_DB_URL: postgresql://user:password@localhost:5432/placeholder
+      - run: pnpm exec tsc --noEmit -p apps/main-gateway-service/tsconfig.app.json
+      - run: pnpm exec tsc --noEmit -p apps/micro-file-service/tsconfig.app.json
+      - run: pnpm exec tsc --noEmit -p apps/micro-post-service/tsconfig.app.json
+      - run: pnpm exec eslint "{apps,libs}/**/*.ts" --ignore-pattern "**/prisma/generated/**"
+      - run: pnpm exec nest build main-gateway-service
+      - run: pnpm exec nest build micro-file-service
+      - run: pnpm exec nest build micro-post-service
+
+  images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [gateway, file-service, post-service, migrations]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          platforms: linux/amd64
+          push: false
+          tags: dzencode-${{ matrix.target }}:${{ github.sha }}

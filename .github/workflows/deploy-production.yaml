@@ -1,0 +1,256 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Granular deployment target
+        required: true
+        type: choice
+        options: [frontend, gateway, file-service, post-service, backend, all]
+      frontend_pr:
+        description: Optional frontend PR number (frontend/all only)
+        required: false
+        type: string
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  packages: read
+  pull-requests: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy production'))
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.resolve.outputs.target }}
+      frontend_pr: ${{ steps.resolve.outputs.frontend_pr }}
+      backend_sha: ${{ steps.resolve.outputs.backend_sha }}
+      backend_pr: ${{ steps.resolve.outputs.backend_pr }}
+      source: ${{ steps.resolve.outputs.source }}
+    steps:
+      - name: Checkout trusted deployment policy from main
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - id: resolve
+        uses: actions/github-script@v7
+        env:
+          DISPATCH_TARGET: ${{ inputs.target }}
+          DISPATCH_FRONTEND_PR: ${{ inputs.frontend_pr }}
+        with:
+          script: |
+            const { pathToFileURL } = require('node:url');
+            const policy = await import(pathToFileURL(`${process.env.GITHUB_WORKSPACE}/deploy/deployment-request.mjs`));
+            let request;
+            let backendSha = '';
+            let backendPr = '';
+            let source = 'workflow_dispatch';
+            if (context.eventName === 'issue_comment') {
+              if (!policy.isAuthorizedAssociation(context.payload.comment.author_association)) {
+                throw new Error('Comment author is not authorized.');
+              }
+              request = policy.parseDeploymentCommand(context.payload.comment.body);
+              const pullNumber = context.payload.issue.number;
+              const { data: pull } = await github.rest.pulls.get({ ...context.repo, pull_number: pullNumber });
+              const resolved = policy.resolvePullRequestSha(pull);
+              backendSha = resolved.sha;
+              backendPr = String(pullNumber);
+              source = `backend-pr:${pullNumber}:${resolved.sourceState}`;
+              const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                ...context.repo, workflow_id: 'ci.yaml', head_sha: backendSha, status: 'completed', per_page: 100,
+              });
+              if (!policy.hasSuccessfulRunForSha(runs.workflow_runs, backendSha)) {
+                throw new Error('Backend CI is not successful for the exact resolved SHA.');
+              }
+            } else {
+              request = policy.parseDispatch(process.env.DISPATCH_TARGET, process.env.DISPATCH_FRONTEND_PR);
+            }
+            core.setOutput('target', request.target);
+            core.setOutput('frontend_pr', request.frontendPr ?? '');
+            core.setOutput('backend_sha', backendSha);
+            core.setOutput('backend_pr', backendPr);
+            core.setOutput('source', source);
+
+  deploy:
+    needs: authorize
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout trusted control plane from main
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - id: resolve
+        name: Revalidate exact SHAs and checks after Environment approval
+        uses: actions/github-script@v7
+        env:
+          TARGET: ${{ needs.authorize.outputs.target }}
+          EXPECTED_BACKEND_SHA: ${{ needs.authorize.outputs.backend_sha }}
+          BACKEND_PR: ${{ needs.authorize.outputs.backend_pr }}
+          FRONTEND_PR: ${{ needs.authorize.outputs.frontend_pr }}
+          STABLE_BACKEND_SHA: ${{ vars.PRODUCTION_BACKEND_IMAGE_SHA }}
+          STABLE_FRONTEND_SHA: ${{ vars.PRODUCTION_FRONTEND_IMAGE_SHA }}
+          FRONTEND_REPOSITORY: ${{ vars.PRODUCTION_FRONTEND_REPOSITORY }}
+          FRONTEND_READ_TOKEN: ${{ secrets.PRODUCTION_FRONTEND_READ_TOKEN || github.token }}
+          SOURCE: ${{ needs.authorize.outputs.source }}
+        with:
+          script: |
+            const { pathToFileURL } = require('node:url');
+            const policy = await import(pathToFileURL(`${process.env.GITHUB_WORKSPACE}/deploy/deployment-request.mjs`));
+            const fullSha = /^[0-9a-f]{40}$/;
+            let backendSha = process.env.EXPECTED_BACKEND_SHA || process.env.STABLE_BACKEND_SHA;
+            let source = process.env.SOURCE;
+            if (process.env.BACKEND_PR) {
+              const pullNumber = Number(process.env.BACKEND_PR);
+              const { data: pull } = await github.rest.pulls.get({ ...context.repo, pull_number: pullNumber });
+              const resolved = policy.resolvePullRequestSha(pull);
+              policy.assertCurrentSha(process.env.EXPECTED_BACKEND_SHA, resolved.sha);
+              backendSha = resolved.sha;
+              const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                ...context.repo, workflow_id: 'ci.yaml', head_sha: backendSha, status: 'completed', per_page: 100,
+              });
+              if (!policy.hasSuccessfulRunForSha(runs.workflow_runs, backendSha)) throw new Error('Exact backend CI is no longer green.');
+            }
+            if (!fullSha.test(backendSha ?? '')) throw new Error('Stable backend image SHA is not configured.');
+
+            let frontendSha = process.env.STABLE_FRONTEND_SHA;
+            if (process.env.FRONTEND_PR) {
+              const [owner, repo, extra] = process.env.FRONTEND_REPOSITORY.split('/');
+              if (!owner || !repo || extra) throw new Error('PRODUCTION_FRONTEND_REPOSITORY must be owner/repository.');
+              const pull_number = Number(process.env.FRONTEND_PR);
+              const headers = {
+                accept: 'application/vnd.github+json',
+                authorization: `Bearer ${process.env.FRONTEND_READ_TOKEN}`,
+                'x-github-api-version': '2022-11-28',
+              };
+              const read = async (url) => {
+                const response = await fetch(url, { headers });
+                if (!response.ok) throw new Error(`Frontend GitHub API request failed with HTTP ${response.status}.`);
+                return response.json();
+              };
+              const pull = await read(`https://api.github.com/repos/${owner}/${repo}/pulls/${pull_number}`);
+              if (pull.base.repo.full_name !== process.env.FRONTEND_REPOSITORY) throw new Error('Frontend PR belongs to another repository.');
+              const resolved = policy.resolvePullRequestSha(pull);
+              frontendSha = resolved.sha;
+              source += `;frontend-pr:${pull_number}:${resolved.sourceState}`;
+              const runs = await read(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/ci.yaml/runs?head_sha=${frontendSha}&status=completed&per_page=100`);
+              if (!policy.hasSuccessfulRunForSha(runs.workflow_runs, frontendSha)) throw new Error('Frontend CI is not successful for the exact resolved SHA.');
+            }
+            if ((process.env.TARGET === 'frontend' || process.env.TARGET === 'all') && !fullSha.test(frontendSha ?? '')) {
+              throw new Error('Stable frontend image SHA is not configured.');
+            }
+            core.setOutput('backend_sha', backendSha);
+            core.setOutput('frontend_sha', frontendSha || '-');
+            core.setOutput('source', source);
+
+      - name: Verify immutable backend GHCR images for the selected target
+        env:
+          TARGET: ${{ needs.authorize.outputs.target }}
+          BACKEND_SHA: ${{ steps.resolve.outputs.backend_sha }}
+          NAMESPACE: ${{ vars.PRODUCTION_GHCR_NAMESPACE }}
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          test -n "$NAMESPACE"
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin >/dev/null
+          images=''
+          case "$TARGET" in
+            gateway) images="dzencode-gateway:$BACKEND_SHA dzencode-migrations:$BACKEND_SHA" ;;
+            file-service) images="dzencode-file-service:$BACKEND_SHA dzencode-migrations:$BACKEND_SHA" ;;
+            post-service) images="dzencode-post-service:$BACKEND_SHA dzencode-migrations:$BACKEND_SHA" ;;
+            backend) images="dzencode-gateway:$BACKEND_SHA dzencode-file-service:$BACKEND_SHA dzencode-post-service:$BACKEND_SHA dzencode-migrations:$BACKEND_SHA" ;;
+            frontend) images='' ;;
+            all) images="dzencode-gateway:$BACKEND_SHA dzencode-file-service:$BACKEND_SHA dzencode-post-service:$BACKEND_SHA dzencode-migrations:$BACKEND_SHA" ;;
+          esac
+          for image in $images; do docker buildx imagetools inspect "ghcr.io/${NAMESPACE,,}/$image" >/dev/null; done
+
+      - name: Verify immutable frontend GHCR image for the selected target
+        if: needs.authorize.outputs.target == 'frontend' || needs.authorize.outputs.target == 'all'
+        env:
+          FRONTEND_SHA: ${{ steps.resolve.outputs.frontend_sha }}
+          NAMESPACE: ${{ vars.PRODUCTION_GHCR_NAMESPACE }}
+          GHCR_TOKEN: ${{ secrets.PRODUCTION_FRONTEND_READ_TOKEN || github.token }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin >/dev/null
+          docker buildx imagetools inspect "ghcr.io/${NAMESPACE,,}/dzencode-frontend:$FRONTEND_SHA" >/dev/null
+
+      - name: Report preparation-only mode
+        if: vars.PRODUCTION_DEPLOY_ENABLED != 'true'
+        run: echo "Exact CI and immutable image gates passed; SSH deployment remains disabled." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Configure verified SSH host
+        if: vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Transfer main-branch control plane
+        if: vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+        env:
+          SSH_HOST: ${{ vars.PRODUCTION_SSH_HOST }}
+          SSH_PORT: ${{ vars.PRODUCTION_SSH_PORT }}
+          SSH_USER: ${{ vars.PRODUCTION_SSH_USER }}
+          DEPLOY_PATH: ${{ vars.PRODUCTION_DEPLOY_PATH }}
+        run: |
+          test -n "$SSH_HOST" && test -n "$SSH_PORT" && test -n "$SSH_USER" && test -n "$DEPLOY_PATH"
+          ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH/deploy'"
+          scp -P "$SSH_PORT" -o StrictHostKeyChecking=yes compose.production.yaml "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/compose.production.yaml"
+          scp -P "$SSH_PORT" -o StrictHostKeyChecking=yes deploy/Caddyfile deploy/*.sh deploy/state-production.py "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/deploy/"
+
+      - name: Revalidate candidate PR SHAs immediately before deployment
+        if: vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+        uses: actions/github-script@v7
+        env:
+          EXPECTED_SHA: ${{ steps.resolve.outputs.backend_sha }}
+          BACKEND_PR: ${{ needs.authorize.outputs.backend_pr }}
+          EXPECTED_FRONTEND_SHA: ${{ steps.resolve.outputs.frontend_sha }}
+          FRONTEND_PR: ${{ needs.authorize.outputs.frontend_pr }}
+          FRONTEND_REPOSITORY: ${{ vars.PRODUCTION_FRONTEND_REPOSITORY }}
+          FRONTEND_READ_TOKEN: ${{ secrets.PRODUCTION_FRONTEND_READ_TOKEN || github.token }}
+        with:
+          script: |
+            if (process.env.BACKEND_PR) {
+              const { data: pull } = await github.rest.pulls.get({ ...context.repo, pull_number: Number(process.env.BACKEND_PR) });
+              const actual = pull.state === 'open' ? pull.head.sha : pull.merge_commit_sha;
+              if (actual !== process.env.EXPECTED_SHA) throw new Error('Backend PR changed before deployment started.');
+            }
+            if (process.env.FRONTEND_PR) {
+              const response = await fetch(`https://api.github.com/repos/${process.env.FRONTEND_REPOSITORY}/pulls/${process.env.FRONTEND_PR}`, {
+                headers: { authorization: `Bearer ${process.env.FRONTEND_READ_TOKEN}`, accept: 'application/vnd.github+json' },
+              });
+              if (!response.ok) throw new Error(`Frontend PR revalidation failed with HTTP ${response.status}.`);
+              const pull = await response.json();
+              const actual = pull.state === 'open' ? pull.head.sha : pull.merge_commit_sha;
+              if (actual !== process.env.EXPECTED_FRONTEND_SHA) throw new Error('Frontend PR changed before deployment started.');
+            }
+
+      - name: Deploy selected target
+        if: vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+        env:
+          TARGET: ${{ needs.authorize.outputs.target }}
+          BACKEND_SHA: ${{ steps.resolve.outputs.backend_sha }}
+          FRONTEND_SHA: ${{ steps.resolve.outputs.frontend_sha }}
+          SOURCE: ${{ steps.resolve.outputs.source }}
+          SSH_HOST: ${{ vars.PRODUCTION_SSH_HOST }}
+          SSH_PORT: ${{ vars.PRODUCTION_SSH_PORT }}
+          SSH_USER: ${{ vars.PRODUCTION_SSH_USER }}
+          DEPLOY_PATH: ${{ vars.PRODUCTION_DEPLOY_PATH }}
+        run: |
+          ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes "$SSH_USER@$SSH_HOST" \
+            "cd '$DEPLOY_PATH' && chmod 700 deploy/*.sh deploy/state-production.py && ./deploy/deploy-production.sh '$TARGET' '$BACKEND_SHA' '$FRONTEND_SHA' '$SOURCE'"
