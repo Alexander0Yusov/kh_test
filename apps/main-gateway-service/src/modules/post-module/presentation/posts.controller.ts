@@ -35,6 +35,7 @@ import {
   CaptchaResponseDto,
   CreatePostDto,
   CreatePostResponseDto,
+  CreatePostSeedsResult,
 } from './create-post.dto';
 import {
   GetCaptchaQuery,
@@ -49,6 +50,7 @@ import {
   GetPostQuery,
   type GetPostResult,
 } from '../application/queries/get-post.query';
+import { CreatePostSeedsCommand } from '../application/commands/create-post-seeds.command';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -151,5 +153,32 @@ export class PostsController {
         dto.parentId ?? null,
       ),
     );
+  }
+
+  @Post('seeds')
+  @UseGuards(JwtAccessGuard)
+  @ApiBearerAuth('accessToken')
+  @ApiOperation({
+    operationId: 'createPostSeeds',
+    summary: 'Create demonstration root posts',
+  })
+  @ApiCreatedResponse({
+    schema: {
+      type: 'object',
+      required: ['createdCount'],
+      properties: {
+        createdCount: {
+          type: 'number',
+          example: 60,
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ type: ErrorResponseDto })
+  @ApiServiceUnavailableResponse({ type: ErrorResponseDto })
+  public createPostSeeds(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<CreatePostSeedsResult> {
+    return this.commandBus.execute(new CreatePostSeedsCommand(user.userId));
   }
 }

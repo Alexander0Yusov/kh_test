@@ -27,6 +27,7 @@ import {
 } from './application/queries/get-captcha.query';
 import { RedisCaptchaService } from './infrastructure/redis-captcha.service';
 import { PostsResolver } from './presentation/graphql/posts.resolver';
+import { CreatePostSeedsHandler } from './application/commands/create-post-seeds.command';
 
 function createPostsClientOptions(config: GatewayConfig): ClientProvider {
   return {
@@ -61,6 +62,7 @@ function createPostsClientOptions(config: GatewayConfig): ClientProvider {
   ],
   controllers: [PostsController, PostCreatedConsumer],
   providers: [
+    CreatePostSeedsHandler,
     CreatePostHandler,
     GetPostsHandler,
     GetPostHandler,

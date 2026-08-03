@@ -97,3 +97,7 @@ export class CaptchaResponseDto {
   @ApiProperty({ example: 'data:image/png;base64,...' })
   public image!: string;
 }
+
+export type CreatePostSeedsResult = {
+  createdCount: number;
+};

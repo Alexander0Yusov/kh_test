@@ -4,6 +4,10 @@ node_modules/
 .env*
 !.env.production.example
 !apps/**/.env.production.example
+!.env.development
+!apps/main-gateway-service/.env.development
+!apps/micro-file-service/.env.development
+!apps/micro-post-service/.env.development
 
 docs
 
