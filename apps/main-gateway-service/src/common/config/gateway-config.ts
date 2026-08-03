@@ -113,13 +113,5 @@ export class GatewayConfig {
     )!;
 
     configValidationUtility.validateConfig(this);
-    this.validateRedisProtocol(this.configService.get('NODE_ENV'));
-  }
-
-  private validateRedisProtocol(nodeEnv: string): void {
-    const protocol = new URL(this.redisUrl).protocol;
-    if (nodeEnv === 'production' && protocol !== 'rediss:') {
-      throw new Error('Production REDIS_URL must use the rediss protocol.');
-    }
   }
 }
