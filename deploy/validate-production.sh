@@ -27,12 +27,67 @@ for service in $services; do
   fi
 done
 
+retry_public_check() {
+  description=$1
+  shift
+
+  attempt=1
+  max_attempts=18
+
+  while [ "$attempt" -le "$max_attempts" ]; do
+    if curl \
+      --fail \
+      --silent \
+      --show-error \
+      --connect-timeout 5 \
+      --max-time 15 \
+      "$@" >/dev/null; then
+      printf '%s passed on attempt %s.\n' "$description" "$attempt"
+      return 0
+    fi
+
+    printf '%s failed on attempt %s/%s; retrying in 5 seconds.\n' \
+      "$description" "$attempt" "$max_attempts" >&2
+
+    attempt=$((attempt + 1))
+
+    if [ "$attempt" -le "$max_attempts" ]; then
+      sleep 5
+    fi
+  done
+
+  printf '%s failed after %s attempts.\n' \
+    "$description" "$max_attempts" >&2
+
+  return 1
+}
+
 if [ "$target" = 'all' ] && [ "${SKIP_PUBLIC_HEALTH:-false}" != 'true' ]; then
-  api_host=$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T reverse-proxy printenv API_HOST)
-  frontend_host=$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T reverse-proxy printenv FRONTEND_HOST)
-  curl --fail --silent --show-error --max-time 15 "https://${frontend_host}/api/runtime-config" >/dev/null
-  curl --fail --silent --show-error --max-time 15 -H 'content-type: application/json' \
-    --data '{"query":"{ __typename }"}' "https://${api_host}/api/graphql" >/dev/null
+  api_host=$(
+    docker compose \
+      --env-file "$ENV_FILE" \
+      -f "$COMPOSE_FILE" \
+      exec -T reverse-proxy \
+      printenv API_HOST
+  )
+
+  frontend_host=$(
+    docker compose \
+      --env-file "$ENV_FILE" \
+      -f "$COMPOSE_FILE" \
+      exec -T reverse-proxy \
+      printenv FRONTEND_HOST
+  )
+
+  retry_public_check \
+    'Frontend runtime configuration check' \
+    "https://${frontend_host}/api/runtime-config"
+
+  retry_public_check \
+    'Gateway GraphQL check' \
+    -H 'content-type: application/json' \
+    --data '{"query":"{ __typename }"}' \
+    "https://${api_host}/api/graphql"
 fi
 
 printf 'Production validation passed for target %s.\n' "$target"
