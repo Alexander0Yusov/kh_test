@@ -89,20 +89,58 @@ for service in $migration_services; do
   successful_migration_containers="$successful_migration_containers $container"
 done
 
+deployment_failed=false
+
+# Service lists are fixed by the allowlisted target switch above.
 # shellcheck disable=SC2086
-if ! docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --no-deps --wait $app_services || \
-   { [ "$target" != 'all' ] || [ "$caddy_was_running" != 'true' ] || [ "$caddy_hash" = "$previous_caddy_hash" ] || \
-     docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T reverse-proxy caddy reload --config /etc/caddy/Caddyfile; } || \
-   ! ENV_FILE=$ENV_FILE COMPOSE_FILE=$COMPOSE_FILE sh ./deploy/validate-production.sh "$target"; then
-  printf 'Health validation failed; restoring only selected application images.\n' >&2
+if ! docker compose \
+  --env-file "$ENV_FILE" \
+  -f "$COMPOSE_FILE" \
+  up -d --no-deps --wait $app_services; then
+  printf 'Application containers failed to start or become healthy.\n' >&2
+  deployment_failed=true
+fi
+
+if [ "$deployment_failed" = 'false' ] &&
+  [ "$target" = 'all' ] &&
+  [ "$caddy_was_running" = 'true' ] &&
+  [ "$caddy_hash" != "$previous_caddy_hash" ]; then
+  if ! docker compose \
+    --env-file "$ENV_FILE" \
+    -f "$COMPOSE_FILE" \
+    exec -T reverse-proxy \
+    caddy reload --config /etc/caddy/Caddyfile; then
+    printf 'Caddy configuration reload failed.\n' >&2
+    deployment_failed=true
+  fi
+fi
+
+if [ "$deployment_failed" = 'false' ]; then
+  if ! ENV_FILE="$ENV_FILE" \
+    COMPOSE_FILE="$COMPOSE_FILE" \
+    sh ./deploy/validate-production.sh "$target"; then
+    printf 'Production validation failed.\n' >&2
+    deployment_failed=true
+  fi
+fi
+
+if [ "$deployment_failed" = 'true' ]; then
+  printf 'Restoring only selected application images.\n' >&2
+
   export GATEWAY_IMAGE_TAG="${current_gateway:-$GATEWAY_IMAGE_TAG}"
   export FILE_SERVICE_IMAGE_TAG="${current_file:-$FILE_SERVICE_IMAGE_TAG}"
   export POST_SERVICE_IMAGE_TAG="${current_post:-$POST_SERVICE_IMAGE_TAG}"
   export FRONTEND_IMAGE_TAG="${current_frontend:-$FRONTEND_IMAGE_TAG}"
-  if [ "$target" != 'all' ] || python3 "$state_tool" "$STATE_FILE" initialized; then
+
+  if [ "$target" != 'all' ] ||
+    python3 "$state_tool" "$STATE_FILE" initialized; then
     # shellcheck disable=SC2086
-    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --no-deps --wait $app_services || true
+    docker compose \
+      --env-file "$ENV_FILE" \
+      -f "$COMPOSE_FILE" \
+      up -d --no-deps --wait $app_services || true
   fi
+
   printf 'Deployment failed; migrations and diagnostic containers/logs are retained and not rolled back.\n' >&2
   exit 1
 fi
