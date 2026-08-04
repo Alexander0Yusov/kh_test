@@ -42,7 +42,20 @@ COPY --from=source --chown=node:node /app/apps/micro-file-service/prisma/generat
 COPY --from=source --chown=node:node /app/apps/micro-post-service/prisma/generated ./apps/micro-post-service/prisma/generated
 USER node
 
-FROM runtime AS gateway
+FROM runtime AS gateway-runtime
+
+USER root
+
+RUN apt-get update && \
+    apt-get install --yes --no-install-recommends \
+      fontconfig \
+      fonts-dejavu-core && \
+    fc-cache -f -v && \
+    rm -rf /var/lib/apt/lists/*
+
+USER node
+
+FROM gateway-runtime AS gateway
 COPY --from=gateway-build --chown=node:node /app/dist/apps/main-gateway-service ./dist/apps/main-gateway-service
 EXPOSE 3000
 CMD ["node", "dist/apps/main-gateway-service/apps/main-gateway-service/src/main.js"]
