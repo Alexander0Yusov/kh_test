@@ -202,6 +202,13 @@ export class ProcessUploadedFileHandler implements ICommandHandler<
         );
       }
 
+      if (width > 320 || height > 240) {
+        throw new InvalidFileContentError(
+          DomainExceptionCode.ValidationFailed,
+          'Image dimensions must not exceed 320x240 pixels.',
+        );
+      }
+
       await image.stats();
 
       return { width, height };

@@ -1,98 +1,987 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# DzenCode Test Task — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+> Backend-часть SPA-приложения с каскадными сообщениями, авторизацией, CAPTCHA, вложениями, сортировкой, cursor-based пагинацией и обновлениями в реальном времени.
+>
+> Основной акцент проекта — не только на выполнении пользовательского сценария, но и на том, как система ведёт себя под изменениями: как разделены ответственности, как защищена структура дерева, как исключён N+1 и как готовые версии доставляются в production без сборки на сервере.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Быстрый локальный запуск
 
-## Description
+### Что потребуется
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Node.js 22.13.1** или совместимая версия Node.js 22;
+- **pnpm 10.13.1**;
+- **Docker Desktop** с запущенным Docker Engine;
+- Git.
 
-## Project setup
+Локальная development-конфигурация уже подготовлена и хранится в репозитории. Docker Compose поднимает PostgreSQL, Redis, RabbitMQ и AWS-совместимую локальную инфраструктуру для S3/SQS.
+
+### 1. Клонировать репозиторий и установить зависимости
 
 ```bash
-$ pnpm install
+git clone https://github.com/Alexander0Yusov/kh_test.git
+cd kh_test
+pnpm install
 ```
 
-## Compile and run the project
+### 2. Поднять локальную инфраструктуру
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm infra:up
 ```
 
-## Run tests
+Команда запускает контейнеры и ожидает их готовности.
+
+Проверить состояние:
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm infra:status
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Посмотреть логи:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm infra:logs
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 3. Сгенерировать Prisma Client для трёх сервисов
 
-## Resources
+```bash
+pnpm prisma:generate
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### 4. Применить миграции всех баз данных
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+pnpm prisma:migrate:deploy
+```
 
-## Support
+### 5. Запустить Gateway, File Service и Post Service
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+pnpm dev:all
+```
 
-## Stay in touch
+После запуска доступны:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- Swagger: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+- GraphQL endpoint: `http://localhost:3000/api/graphql`
+- Gateway API base URL: `http://localhost:3000/api`
+- Frontend запускается отдельно на `http://localhost:4200`
 
-## License
+Frontend-репозиторий:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+<https://github.com/Alexander0Yusov/kh_test_front>
+
+### Альтернативный запуск сервисов в отдельных терминалах
+
+```bash
+pnpm start:gateway
+```
+
+```bash
+pnpm start:file
+```
+
+```bash
+pnpm start:post
+```
+
+Такой режим удобен, когда нужно отдельно читать логи одного процесса или отлаживать конкретный микросервис.
+
+### Остановка локальной инфраструктуры
+
+Остановить контейнеры без удаления:
+
+```bash
+pnpm infra:stop
+```
+
+Остановить и удалить контейнеры и сеть:
+
+```bash
+pnpm infra:down
+```
+
+---
+
+## Live demo
+
+- Приложение: <https://dzencode.nymbi.org>
+- Swagger: <https://api-dzencode.nymbi.org/api/docs>
+
+---
+
+## Что реализовано
+
+Приложение поддерживает:
+
+- регистрацию пользователя с обязательным аватаром;
+- вход, refresh token rotation и несколько параллельных пользовательских сессий;
+- создание корневых сообщений и ответов без ограничения глубины дерева;
+- обязательную CAPTCHA для обычного создания сообщений;
+- опциональный `homePage` и опциональное вложение;
+- сортировку корневых сообщений по дате, имени пользователя и email;
+- направления сортировки `ASC` и `DESC`;
+- cursor-based пагинацию: 25 корневых сообщений по умолчанию, максимум 50;
+- GraphQL-чтение ленты и отдельного сообщения;
+- REST-команды для auth, файлов, создания сообщений и maintenance-операций;
+- realtime-уведомления через Socket.IO;
+- прямую загрузку файлов в S3 через Presigned POST;
+- демонстрационную генерацию 60 сообщений через `Seeds`;
+- демонстрационную полную очистку данных через `Erase All`.
+
+Проект сознательно не содержит редактирования сущностей: основной жизненный цикл строится вокруг создания, использования и удаления данных.
+
+---
+
+## Архитектура
+
+```text
+Browser / Next.js
+        │
+        ├── REST
+        ├── GraphQL
+        └── Socket.IO
+        │
+        ▼
+Main Gateway Service
+        │
+        ├── gRPC ─────► File Service
+        │
+        ├── gRPC ─────► Post Service
+        │
+        └── RabbitMQ ◄─► asynchronous events
+```
+
+В production перед приложением работает Caddy:
+
+```text
+Internet
+  │
+  ▼
+Caddy :80 / :443
+  ├── dzencode.nymbi.org      → Frontend
+  └── api-dzencode.nymbi.org  → Gateway
+```
+
+Caddy выполняет роль reverse proxy (принимает внешний запрос и передаёт его нужному внутреннему контейнеру), автоматически получает TLS-сертификаты и перенаправляет HTTP на HTTPS.
+
+File Service и Post Service не публикуются наружу. Gateway общается с ними по gRPC.
+
+### Почему gRPC используется внутри системы
+
+gRPC даёт:
+
+- строго описанный контракт через `.proto`;
+- сгенерированные TypeScript-типы;
+- компактный бинарный протокол;
+- меньше случайных расхождений между клиентом и сервером;
+- явную границу внутреннего API.
+
+Проще говоря, внутренние сервисы не обмениваются произвольными JSON-объектами: формат запроса и ответа заранее зафиксирован контрактом и проверяется ещё на этапе сборки.
+
+### Что даёт декомпозиция
+
+Gateway отвечает за публичный API, авторизацию, CAPTCHA и orchestration. Post Service владеет сообщениями и структурой дерева. File Service владеет файловыми записями и их жизненным циклом.
+
+Это позволяет независимо развивать и масштабировать отдельные зоны ответственности. При недоступности одного сервиса независимые сценарии могут продолжить работу, а связанные операции завершаются контролируемой ошибкой. Это частичная изоляция отказов, а не обещание абсолютной доступности всей системы при любом сбое.
+
+---
+
+## Как хранится дерево сообщений
+
+Для каждого сообщения сохраняются:
+
+```text
+parentId
+rootId
+path
+childCounter
+```
+
+Пример materialized path (материализованный путь — заранее сохранённый адрес узла в дереве):
+
+```text
+1
+1.1
+1.1.1
+1.2
+1.2.1
+```
+
+Корневой пост имеет:
+
+```text
+parentId = null
+rootId = null
+path = "1"
+```
+
+Ответ получает:
+
+- `parentId` непосредственного родителя;
+- `rootId` корня всей ветки;
+- `path` родителя плюс следующий порядковый номер ребёнка.
+
+Упрощённо:
+
+```text
+newPath = parent.path + "." + nextChildNumber
+```
+
+### Создание ответа и защита от конкурентной коллизии
+
+Ответ создаётся внутри Prisma-транзакции:
+
+1. находится родитель;
+2. проверяется, что он существует и не удалён;
+3. `childCounter` родителя увеличивается атомарно;
+4. из нового значения строится `path`;
+5. ответ сохраняется в той же транзакции.
+
+Атомарный increment означает, что увеличение выполняет сама база данных. Если два запроса одновременно отвечают одному родителю, update одной и той же строки сериализуется: пока первая транзакция меняет счётчик, вторая ждёт и затем получает уже следующее значение, а не повторяет прежнее число.
+
+Дополнительно PostgreSQL защищает уникальность позиции:
+
+```prisma
+@@unique([rootId, path])
+```
+
+Таким образом, структура защищена на трёх уровнях:
+
+```text
+transaction
++ atomic childCounter increment
++ unique(rootId, path)
+```
+
+Возможное production-усиление — ограниченный retry при редком конфликте уникальности.
+
+---
+
+## Как загружается страница и почему нет N+1
+
+Страница ленты загружается не рекурсивными запросами и не отдельным запросом для каждого корня.
+
+Используются два bulk-запроса.
+
+### Запрос 1. Корневые сообщения страницы
+
+Сначала выбираются только корневые сообщения:
+
+```text
+parentId = null
+deletedAt = null
+```
+
+Запрашивается `limit + 1` строка. Дополнительная строка нужна, чтобы определить `hasMore`, не выполняя отдельный `COUNT(*)`.
+
+На этом этапе выбираются только поля, необходимые для курсора и сортировки:
+
+```text
+id
+createdAt
+userName
+email
+```
+
+### Запрос 2. Все деревья выбранных корней
+
+После получения `rootIds` одним запросом загружаются:
+
+- сами выбранные корневые сообщения;
+- все сообщения, у которых `rootId` входит в список выбранных корней.
+
+Упрощённое условие:
+
+```ts
+OR: [
+  { id: { in: rootIds }, parentId: null },
+  { rootId: { in: rootIds } },
+]
+```
+
+Количество SQL-запросов остаётся постоянным: оно не растёт вместе с количеством корней на странице.
+
+Это устраняет N+1 (ситуацию, когда после одного запроса списка приложение делает ещё по запросу для каждой строки).
+
+### Компромисс текущей модели
+
+Если один корень содержит очень большое количество потомков, его дерево загружается целиком. Для масштаба в миллионы сообщений следующим шагом стали бы lazy loading ветвей или отдельная cursor-based пагинация детей.
+
+Демонстрационная кнопка `Seeds` создаёт 60 сообщений для проверки нескольких страниц, сортировки и realtime-поведения. Она не является нагрузочным тестом на миллион сообщений.
+
+---
+
+## Cursor-based пагинация
+
+Курсор содержит не только ID, но и правила текущей выборки:
+
+```text
+sortBy
+sortDirection
+limit
+fields
+value
+id
+```
+
+Позиция определяется парой:
+
+```text
+основное значение сортировки + UUID
+```
+
+Например, если несколько сообщений имеют одинаковую дату, сравнение продолжается по `id`. Это делает порядок стабильным и не позволяет строкам пропадать или повторяться между страницами.
+
+Поддерживаются пары:
+
+```text
+createdAt + id
+userName + id
+email + id
+```
+
+В PostgreSQL для них созданы частичные индексы только по живым корневым сообщениям:
+
+```sql
+("createdAt", "id")
+("userName", "id")
+("email", "id")
+WHERE "parentId" IS NULL AND "deletedAt" IS NULL
+```
+
+При изменении сортировки старое положение курсора сбрасывается, потому что курсор от одного порядка нельзя безопасно продолжать в другом.
+
+---
+
+## Порядок сообщений внутри дерева
+
+После bulk-выборки сообщения группируются по `rootId` и сортируются по числовым сегментам `path`.
+
+Это важно для путей:
+
+```text
+1.2
+1.10
+```
+
+Обычная строковая сортировка могла бы поставить `1.10` раньше `1.2`. В проекте сегменты преобразуются в числа и сравниваются поэлементно.
+
+Backend возвращает сообщения в правильном depth-first порядке (сначала родитель, затем его ветка).
+
+Frontend дополнительно хранит данные в нормализованном виде:
+
+```text
+postsById
+rootIds
+```
+
+и выполняет итеративный обход через стек. Рекурсия JavaScript не используется, поэтому глубокая ветка не расходует стек вызовов браузера.
+
+---
+
+## Realtime-синхронизация сообщений
+
+После сохранения Post Service публикует событие:
+
+```text
+posts.created
+```
+
+Событие проходит через RabbitMQ в Gateway, после чего Gateway отправляет компактное Socket.IO-событие всем клиентам namespace `/posts`.
+
+Frontend не вставляет событие вслепую. Realtime orchestrator:
+
+1. проверяет, загружен ли нужный корень;
+2. для ответа проверяет наличие родителя;
+3. для нового корня сравнивает его с границей текущей сортировки;
+4. при релевантности запрашивает полную модель через `GET /posts/{postId}`;
+5. добавляет её в нормализованное состояние;
+6. пересобирает плоские строки дерева.
+
+Если новый корень не относится к текущей странице, он игнорируется. Если клиенту не хватает данных для надёжного сравнения, показывается уведомление `New message available` с предложением обновить ленту.
+
+События, пришедшие во время начальной загрузки, временно буферизуются.
+
+---
+
+## Жизненный цикл файла
+
+Файл проходит состояния:
+
+```text
+PENDING → UPLOADED → USED
+```
+
+Также предусмотрены:
+
+```text
+REJECTED
+FAILED
+```
+
+### Полная цепочка загрузки
+
+```text
+Frontend
+  │
+  ├── запрашивает создание upload
+  ▼
+Gateway
+  │ gRPC
+  ▼
+File Service
+  │
+  ├── создаёт File со статусом PENDING
+  └── возвращает Presigned POST
+  │
+  ▼
+Frontend загружает файл напрямую в S3
+  │
+  ▼
+S3 ObjectCreated event
+  │
+  ▼
+SQS
+  │
+  ▼
+File Service проверяет объект
+  │
+  ├── принимает → UPLOADED
+  └── отклоняет → REJECTED + удаление из S3
+  │
+  ▼
+RabbitMQ: files.uploaded
+  │
+  ▼
+Gateway → Socket.IO room file:<fileId>
+  │
+  ▼
+Frontend получает подтверждение
+```
+
+После привязки файла к аватару или сообщению асинхронное доменное событие переводит его из `UPLOADED` в `USED`.
+
+Сиротские файлы, которые были загружены, но не привязаны к сущности, в текущем scope автоматически по расписанию не удаляются.
+
+### Почему используется комната `file:<fileId>`
+
+Перед загрузкой клиент подписывается на Socket.IO-комнату конкретного файла:
+
+```text
+file:<fileId>
+```
+
+Подтверждение `files.uploaded` получает только клиент, который ожидает этот файл, а не все подключённые пользователи.
+
+Клиентская реализация поддерживает:
+
+- подтверждение подписки;
+- переподписку после reconnect;
+- таймаут подписки;
+- таймаут ожидания обработки;
+- отмену незавершённых операций.
+
+### Проверка реального содержимого
+
+Presigned POST ограничивает:
+
+- ожидаемый ключ;
+- `Content-Type`;
+- максимальный размер;
+- срок действия ссылки.
+
+После события S3 File Service не доверяет только имени или заголовку файла. Он дополнительно:
+
+- читает metadata через `HeadObject`;
+- сравнивает фактический и ожидаемый размер;
+- скачивает объект с ограничением по объёму;
+- проверяет соответствие содержимого расширению;
+- декодирует изображения через Sharp;
+- проверяет размеры изображения;
+- проверяет TXT как корректный UTF-8;
+- отклоняет бинарные управляющие символы в TXT;
+- удаляет отклонённый объект из S3.
+
+Download URL является временным и создаётся как presigned URL с TTL из конфигурации.
+
+---
+
+## RabbitMQ и асинхронные события
+
+Используется durable topic exchange (постоянный обменник, который маршрутизирует сообщения по routing key).
+
+Подтверждённые события:
+
+| Routing key | Publisher | Consumers | Назначение |
+|---|---|---|---|
+| `files.uploaded` | File Service | Gateway | уведомление ожидающего клиента через WebSocket |
+| `posts.created` | Post Service | Gateway, File Service | realtime-публикация поста и перевод вложения в `USED` |
+
+Сообщения публикуются как persistent, publisher ожидает confirms от RabbitMQ.
+
+Consumer:
+
+- подтверждает корректно обработанное сообщение через `ack`;
+- при временной ошибке использует `nack(..., requeue=true)` и возвращает сообщение в очередь;
+- некорректное событие логируется и подтверждается, чтобы не блокировать очередь бесконечно.
+
+DLQ и ограничение количества повторных доставок в текущем scope не добавлялись.
+
+---
+
+## CAPTCHA и Redis
+
+CAPTCHA хранится в Redis не открытым текстом, а как:
+
+```text
+salt + scrypt hash
+```
+
+При создании используется:
+
+```text
+SET key value EX <TTL> NX
+```
+
+При проверке:
+
+```text
+GETDEL
+```
+
+Это даёт сразу несколько свойств:
+
+- challenge имеет ограниченный срок жизни;
+- CAPTCHA одноразовая;
+- повторное использование невозможно;
+- даже неверная попытка потребляет challenge;
+- исходный ответ не хранится в Redis;
+- сравнение выполняется через `timingSafeEqual`;
+- любой экземпляр Gateway может проверить CAPTCHA.
+
+Последний пункт важен при горизонтальном масштабировании: запрос на создание CAPTCHA и запрос на её проверку не обязаны попадать в один и тот же контейнер Gateway.
+
+---
+
+## Аутентификация и сессии
+
+### Login
+
+```text
+email + password
+→ проверка password hash
+→ новая Session в PostgreSQL
+→ access token + refresh token
+```
+
+Один пользователь может иметь несколько активных сессий для разных устройств.
+
+### Где хранятся токены
+
+```text
+access token  → память Zustand на frontend
+refresh token → Secure HttpOnly SameSite=Lax cookie
+session       → PostgreSQL
+```
+
+Access token не сохраняется в `localStorage`.
+
+Refresh token недоступен JavaScript-коду страницы благодаря `HttpOnly`.
+
+### Refresh token rotation
+
+При обновлении токенов:
+
+1. проверяется refresh JWT;
+2. загружается старая сессия;
+3. проверяется её активность;
+4. создаётся новая сессия;
+5. старая сессия отзывается;
+6. выдаётся новая пара токенов.
+
+Access Guard проверяет не только подпись JWT, но и server-side session. Поэтому logout или отзыв сессии прекращает доступ даже до естественного истечения access token.
+
+---
+
+## REST, GraphQL, gRPC, RabbitMQ и WebSocket — разные роли
+
+| Транспорт | Роль |
+|---|---|
+| REST | auth, команды, файлы, maintenance |
+| GraphQL | чтение ленты и отдельного сообщения |
+| gRPC | синхронное внутреннее взаимодействие Gateway с микросервисами |
+| RabbitMQ | асинхронные доменные события |
+| Socket.IO | realtime-уведомления браузеру |
+
+GraphQL поддерживает cursor pagination, сортировку, limit и selection set. Gateway может запросить только те поля, которые реально выбрал клиент, включая необязательные avatar/attachment URL.
+
+---
+
+## Защита от XSS
+
+Разрешённая разметка:
+
+```text
+a[href,title]
+strong
+i
+code
+```
+
+Защита построена в несколько слоёв.
+
+### Frontend validation
+
+DOMPurify очищает введённую строку. Если очищенная строка отличается от исходной, форма отклоняет сообщение:
+
+```text
+Message contains unsupported markup.
+Use only a[href,title], strong, i and code.
+```
+
+### Backend sanitization
+
+Gateway независимо применяет `sanitize-html` и сохраняет очищенный результат.
+
+Для ссылок разрешены схемы:
+
+```text
+http
+https
+mailto
+```
+
+Protocol-relative URL запрещены.
+
+### Output sanitization
+
+Перед `dangerouslySetInnerHTML` frontend снова применяет DOMPurify.
+
+Итог:
+
+```text
+frontend validation
+→ backend sanitization
+→ frontend output sanitization
+```
+
+Даже если клиентская проверка будет обойдена, backend не доверяет входящему HTML.
+
+---
+
+## Защита от SQL injection
+
+Доступ к данным выполняется через типизированный Prisma Client:
+
+```text
+findMany
+findUnique
+create
+update
+deleteMany
+$transaction
+```
+
+В проекте не используются:
+
+```text
+$queryRaw
+$queryRawUnsafe
+$executeRaw
+```
+
+Динамические поля сортировки выбираются через закрытый `switch` из allowlist:
+
+```text
+createdAt
+userName
+email
+```
+
+Пользовательское значение не конкатенируется в SQL-строку.
+
+Корректнее говорить не «ORM делает SQL injection невозможной», а так: Prisma использует параметризованные операции, а проект не применяет unsafe raw SQL и не подставляет пользовательские имена колонок напрямую.
+
+---
+
+## Ошибки между транспортами
+
+Бизнес-слой использует transport-neutral `DomainException` — исключение, которое не знает, будет ли ошибка показана через HTTP, GraphQL или gRPC.
+
+Далее transport layer преобразует её в нужный формат:
+
+```text
+DomainException
+  ├── gRPC exception filter
+  ├── HTTP exception filter
+  └── GraphQL error mapper
+```
+
+Публичный ответ содержит машинный код, человекочитаемое сообщение и дополнительные данные поля, если они есть.
+
+Это не позволяет CQRS-handler или repository напрямую зависеть от HTTP status code либо gRPC status.
+
+---
+
+## CQRS
+
+Команды и запросы разделены:
+
+- command изменяет состояние;
+- query читает данные;
+- handler содержит один прикладной сценарий;
+- repository скрывает способ хранения;
+- domain entity защищает допустимые переходы состояния.
+
+CQRS используется внутри Gateway, Post Service и File Service.
+
+Задача этого разделения не в увеличении количества файлов, а в том, чтобы сценарий создания поста, получения страницы, обработки файла или refresh token можно было читать отдельно от транспорта и инфраструктуры.
+
+---
+
+## Seeds
+
+Кнопка `Seeds` доступна авторизованному пользователю и создаёт 60 корневых сообщений.
+
+```text
+25 сообщений группы A
+25 сообщений группы B
+10 сообщений группы C
+```
+
+Пример:
+
+```text
+userName: AUser001
+email: c001@example.com
+message: Seed message #001
+```
+
+Группы имени и email намеренно рассинхронизированы:
+
+```text
+A → c
+B → a
+C → b
+```
+
+Поэтому сортировка по `userName` и по `email` даёт разные результаты и её удобно проверять визуально.
+
+60 сообщений выбраны для демонстрации:
+
+```text
+25 + 25 + 10
+```
+
+То есть двух полных страниц и одной неполной.
+
+Между запросами используется небольшая задержка. Защита от повторного параллельного нажатия не предусмотрена, поэтому повторный запуск создаёт ещё один набор демонстрационных сообщений.
+
+---
+
+## Erase All
+
+`Erase All` — демонстрационная maintenance-операция, а не функция обычного production-продукта.
+
+Она очищает:
+
+- S3-объекты;
+- файловые записи;
+- сообщения;
+- пользователей;
+- сессии;
+- CAPTCHA-ключи Redis.
+
+RabbitMQ exchange и SQS queue не удаляются, потому что это инфраструктурные ресурсы, а не пользовательские данные.
+
+---
+
+## CI/CD
+
+### Backend CI
+
+CI запускается для pull request и push в `main`.
+
+Он выполняет:
+
+```text
+pnpm install --frozen-lockfile
+Buf lint
+повторную генерацию gRPC-контрактов
+проверку отсутствия незакоммиченного diff
+Prisma generate
+TypeScript check трёх приложений
+ESLint
+Nest build трёх приложений
+Docker build четырёх targets
+```
+
+Docker targets:
+
+```text
+gateway
+file-service
+post-service
+migrations
+```
+
+### Публикация образов
+
+После успешного CI отдельный workflow публикует immutable images в GHCR с полным Git SHA:
+
+```text
+dzencode-gateway:<sha>
+dzencode-file-service:<sha>
+dzencode-post-service:<sha>
+dzencode-migrations:<sha>
+```
+
+Immutable image означает, что версия определяется конкретным commit SHA, а не плавающим тегом `latest`.
+
+### Production deployment
+
+Деплой можно запустить вручную либо комментарием в pull request:
+
+```text
+/deploy production all
+```
+
+Также поддерживаются granular targets:
+
+```text
+frontend
+gateway
+file-service
+post-service
+backend
+all
+```
+
+Workflow:
+
+1. проверяет полномочия автора команды;
+2. определяет точный SHA pull request или merge commit;
+3. убеждается, что CI зелёный именно для этого SHA;
+4. проверяет наличие immutable GHCR images;
+5. повторно сверяет SHA перед началом;
+6. берёт trusted deployment scripts из `main`;
+7. передаёт Compose, Caddyfile и scripts на VPS;
+8. выполняет миграции;
+9. запускает выбранные контейнеры;
+10. выполняет health validation.
+
+VPS не собирает приложение. Он получает уже собранные и проверенные Docker-образы.
+
+---
+
+## Полезные команды
+
+### Инфраструктура
+
+```bash
+pnpm infra:up
+pnpm infra:stop
+pnpm infra:down
+pnpm infra:restart
+pnpm infra:status
+pnpm infra:logs
+```
+
+### Prisma
+
+```bash
+pnpm prisma:validate
+pnpm prisma:generate
+pnpm prisma:migrate:deploy
+pnpm prisma:migrate:status
+```
+
+### Контракты
+
+```bash
+pnpm contracts:lint
+pnpm contracts:generate
+```
+
+### Сервисы
+
+```bash
+pnpm dev:all
+pnpm start:gateway
+pnpm start:file
+pnpm start:post
+```
+
+### Проверки и сборка
+
+```bash
+pnpm lint
+pnpm build
+pnpm test
+pnpm test:e2e
+```
+
+В репозитории настроены Jest-команды, однако основная текущая проверка проекта сосредоточена на CI, типизации, сборке, Docker image build, health checks и ручных production-сценариях.
+
+---
+
+## Структура приложений
+
+```text
+apps/
+  main-gateway-service/
+  micro-file-service/
+  micro-post-service/
+
+libs/
+  common/
+  contracts/
+```
+
+- `main-gateway-service` — публичный API, auth, GraphQL, CAPTCHA, orchestration, WebSocket;
+- `micro-file-service` — File lifecycle, S3, SQS и проверка контента;
+- `micro-post-service` — сообщения, дерево, пагинация и публикация `posts.created`;
+- `libs/common` — общие конфигурации, исключения и базовые domain abstractions;
+- `libs/contracts` — protobuf-контракты и сгенерированные типы.
+
+---
+
+## Технологии
+
+- Node.js 22
+- TypeScript
+- NestJS 11
+- Prisma 7
+- PostgreSQL
+- Redis
+- RabbitMQ
+- gRPC / Protocol Buffers
+- REST
+- GraphQL / Apollo
+- Socket.IO
+- AWS S3
+- AWS SQS
+- Sharp
+- Docker / Docker Compose
+- GitHub Actions
+- GHCR
+- Caddy
+
+---
+
+## Scope note
+
+Проект демонстрирует архитектурные решения уровня Middle/Middle+ и содержит инфраструктуру для масштабирования отдельных сервисов, стабильную cursor pagination, bulk-загрузку деревьев и конкурентно безопасное назначение `path`.
+
+При этом демонстрационные `Seeds` не заменяют полноценный нагрузочный тест на миллион сообщений. Для такого масштаба отдельно потребовались бы:
+
+- генератор нагрузки;
+- метрики latency/throughput;
+- профилирование PostgreSQL;
+- пагинация или lazy loading очень крупных ветвей;
+- стратегия DLQ и retry limits;
+- автоматическая очистка сиротских файлов.
+
+Этот раздел намеренно отделяет реально реализованное поведение от следующих этапов production-hardening.

@@ -144,7 +144,8 @@ export class RedisCaptchaService extends CaptchaService {
           `<text x="${18 + index * 25}" y="${42 + randomInt(-4, 5)}" transform="rotate(${randomInt(-15, 16)} ${18 + index * 25} 35)">${character}</text>`,
       )
       .join('');
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="175" height="60"><rect width="100%" height="100%" fill="#f4f4f4"/><g stroke="#7b7b7b" opacity=".45"><path d="M5 12L168 49M3 48L171 16M10 30L165 27"/></g><g font-family="monospace" font-size="30" font-weight="700" fill="#222">${characters}</g></svg>`;
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="175" height="60"><rect width="100%" height="100%" fill="#f4f4f4"/><g stroke="#7b7b7b" opacity=".45"><path d="M5 12L168 49M3 48L171 16M10 30L165 27"/></g><g font-family="DejaVu Sans Mono, monospace" font-size="30" font-weight="700" fill="#222">${characters}</g></svg>`;
   }
 }
 
